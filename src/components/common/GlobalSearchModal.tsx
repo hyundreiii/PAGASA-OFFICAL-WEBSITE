@@ -3,9 +3,14 @@ import { useApp } from '../../context/AppContext';
 import { Search, Calendar, FolderGit2, Megaphone, Users, Award, X, ChevronRight, UserCheck } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
-export const GlobalSearchModal: React.FC = () => {
+interface GlobalSearchModalProps {
+  isOpen?: boolean;
+  onClose?: () => void;
+}
+
+export const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({ isOpen: propIsOpen, onClose: propOnClose }) => {
   const {
-    isGlobalSearchOpen,
+    isGlobalSearchOpen: contextIsOpen,
     setIsGlobalSearchOpen,
     events,
     projects,
@@ -18,6 +23,12 @@ export const GlobalSearchModal: React.FC = () => {
     setSelectedEventId,
     setSelectedMemberId
   } = useApp();
+
+  const isGlobalSearchOpen = propIsOpen !== undefined ? propIsOpen : contextIsOpen;
+  const handleClose = () => {
+    if (propOnClose) propOnClose();
+    setIsGlobalSearchOpen(false);
+  };
 
   const [query, setQuery] = useState('');
 
@@ -32,7 +43,7 @@ export const GlobalSearchModal: React.FC = () => {
       announcements: announcements.filter(a => (a.title || '').toLowerCase().includes(q) || (a.content || '').toLowerCase().includes(q) || (a.category || '').toLowerCase().includes(q)),
       activities: activities.filter(act => (act.title || '').toLowerCase().includes(q) || (act.leader || '').toLowerCase().includes(q) || (act.description || '').toLowerCase().includes(q)),
       officials: officials.filter(o => (o.fullName || '').toLowerCase().includes(q) || (o.position || '').toLowerCase().includes(q) || (o.committee || '').toLowerCase().includes(q)),
-      members: (currentRole === 'SUPER_ADMIN' || currentRole === 'ADMIN' || currentRole === 'EVENT_STAFF')
+      members: (currentRole === 'SUPER_ADMIN' || currentRole === 'ADMIN')
         ? members.filter(m => (m.fullName || '').toLowerCase().includes(q) || (m.memberId || '').toLowerCase().includes(q) || (m.barangay || '').toLowerCase().includes(q) || (m.email || '').toLowerCase().includes(q))
         : []
     };

@@ -6,9 +6,14 @@ import { X, Lock, Mail, User, Phone, Calendar, Shield, ArrowRight, CheckCircle2,
 import { motion, AnimatePresence } from 'motion/react';
 import confetti from 'canvas-confetti';
 
-export const AuthModal: React.FC = () => {
+interface AuthModalProps {
+  isOpen?: boolean;
+  onClose?: () => void;
+}
+
+export const AuthModal: React.FC<AuthModalProps> = ({ isOpen: propIsOpen, onClose: propOnClose }) => {
   const {
-    isAuthModalOpen,
+    isAuthModalOpen: contextIsOpen,
     setIsAuthModalOpen,
     authModalMode,
     setAuthModalMode,
@@ -19,6 +24,12 @@ export const AuthModal: React.FC = () => {
     members,
     switchRole
   } = useApp();
+
+  const isAuthModalOpen = propIsOpen !== undefined ? propIsOpen : contextIsOpen;
+  const handleClose = () => {
+    if (propOnClose) propOnClose();
+    setIsAuthModalOpen(false);
+  };
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);

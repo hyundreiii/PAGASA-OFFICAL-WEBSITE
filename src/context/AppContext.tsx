@@ -143,8 +143,8 @@ interface AppContextType {
   
   // Role & Auth functions
   switchRole: (role: UserRole, userPayload?: User) => void;
-  loginUser: (email: string, role?: UserRole) => boolean;
-  loginWithSupabase: (email: string, password: string, targetRole?: UserRole) => Promise<{ success: boolean; message?: string }>;
+  loginUser: (email: string, role?: UserRole, providedName?: string) => boolean;
+  loginWithSupabase: (email: string, password: string, targetRole?: UserRole, providedName?: string) => Promise<{ success: boolean; message?: string }>;
   signUpWithSupabase: (email: string, password: string, memberData: Omit<Member, 'id' | 'memberId' | 'membershipDate' | 'stats'>) => Promise<{ success: boolean; message?: string; memberId?: string }>;
   resetUserPassword: (email: string) => Promise<{ success: boolean; message: string }>;
   loginWithGoogle: () => Promise<boolean>;
@@ -174,7 +174,12 @@ interface AppContextType {
   addEvent: (event: Omit<EventItem, 'id' | 'currentParticipants' | 'createdAt'>) => EventItem;
   updateEvent: (id: string, updates: Partial<EventItem>) => void;
   deleteEvent: (id: string) => void;
-  registerForEvent: (eventId: string, memberInfo: { memberId: string; name: string; email: string }) => { success: boolean; message: string };
+  registerForEvent: (
+    eventId: string,
+    memberInfoOrName: { memberId: string; name: string; email: string } | string,
+    barangayOrEmail?: string,
+    maybeMemberId?: string
+  ) => { success: boolean; message: string };
   cancelEventRegistration: (eventId: string, memberId: string) => void;
   isMemberRegisteredForEvent: (eventId: string, memberId: string) => boolean;
 
@@ -222,6 +227,8 @@ interface AppContextType {
   gallery: GalleryPhoto[];
   addGalleryPhoto: (photo: Omit<GalleryPhoto, 'id'>) => void;
   deleteGalleryPhoto: (id: string) => void;
+  addGalleryItem?: (photo: Omit<GalleryPhoto, 'id'>) => void;
+  deleteGalleryItem?: (id: string) => void;
 
   officials: OfficialItem[];
   addOfficial: (official: Omit<OfficialItem, 'id'>) => void;
@@ -1136,20 +1143,46 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return registrations.some(r => r.eventId === eventId && r.memberId === memberId && r.status === 'Registered');
   };
 
-  const registerForEvent = (eventId: string, memberInfo: { memberId: string; name: string; email: string }) => {
+  const registerForEvent = (
+    eventId: string,
+    memberInfoOrName: { memberId: string; name: string; email: string } | string,
+    barangayOrEmail?: string,
+    maybeMemberId?: string
+  ) => {
     const targetEvent = events.find(e => e.id === eventId);
     if (!targetEvent) return { success: false, message: 'Event not found.' };
 
-    if (!targetEvent.registrationEnabled) {
+    if (!targetEvent.registrationEnabled && targetEvent.isRegistrationOpen === false) {
       return { success: false, message: 'Registration is currently disabled for this event.' };
     }
 
-    if (targetEvent.currentParticipants >= targetEvent.maxParticipants) {
+    const currentCount = targetEvent.currentParticipants || targetEvent.registeredCount || 0;
+    const maxCapacity = targetEvent.maxParticipants || targetEvent.maxCapacity || 100;
+
+    if (currentCount >= maxCapacity) {
       return { success: false, message: 'Event has reached maximum participant capacity.' };
     }
 
+    let memberId = 'GUEST-' + Date.now();
+    let name = 'Guest Participant';
+    let email = 'guest@pagasaguimba.org';
+
+    if (typeof memberInfoOrName === 'object' && memberInfoOrName !== null) {
+      memberId = memberInfoOrName.memberId;
+      name = memberInfoOrName.name;
+      email = memberInfoOrName.email;
+    } else if (typeof memberInfoOrName === 'string') {
+      name = memberInfoOrName;
+      if (maybeMemberId) {
+        memberId = maybeMemberId;
+      }
+      if (barangayOrEmail) {
+        email = barangayOrEmail.includes('@') ? barangayOrEmail : `${name.toLowerCase().replace(/\s+/g, '')}@pagasaguimba.org`;
+      }
+    }
+
     // Check duplicate
-    const exists = registrations.some(r => r.eventId === eventId && r.memberId === memberInfo.memberId && r.status === 'Registered');
+    const exists = registrations.some(r => r.eventId === eventId && r.memberId === memberId && r.status === 'Registered');
     if (exists) {
       return { success: false, message: 'You are already registered for this event.' };
     }
@@ -1157,21 +1190,21 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const newReg: EventRegistration = {
       id: 'reg-' + Date.now(),
       eventId,
-      memberId: memberInfo.memberId,
-      memberName: memberInfo.name,
-      memberEmail: memberInfo.email,
+      memberId: memberId,
+      memberName: name,
+      memberEmail: email,
       registeredAt: new Date().toLocaleString(),
       status: 'Registered'
     };
 
     setRegistrations(prev => [...prev, newReg]);
 
-    const updatedEventCount = targetEvent.currentParticipants + 1;
-    setEvents(prev => prev.map(e => e.id === eventId ? { ...e, currentParticipants: updatedEventCount } : e));
+    const updatedEventCount = currentCount + 1;
+    setEvents(prev => prev.map(e => e.id === eventId ? { ...e, currentParticipants: updatedEventCount, registeredCount: updatedEventCount } : e));
     
     // Update member stats
     setMembers(prev => prev.map(m => {
-      if (m.memberId === memberInfo.memberId) {
+      if (m.memberId === memberId) {
         return {
           ...m,
           stats: { ...m.stats, eventsJoined: m.stats.eventsJoined + 1 }
@@ -1680,6 +1713,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         gallery,
         addGalleryPhoto,
         deleteGalleryPhoto,
+        addGalleryItem: addGalleryPhoto,
+        deleteGalleryItem: deleteGalleryPhoto,
         officials,
         addOfficial,
         updateOfficial,

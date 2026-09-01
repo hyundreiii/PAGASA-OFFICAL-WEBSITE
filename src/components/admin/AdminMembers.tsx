@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
-import { Member, User } from '../../types';
+import { Member, User, MembershipStatus } from '../../types';
 import { GUIMBA_BARANGAYS } from '../../data/mockData';
 import { 
   Users, 
@@ -65,7 +65,7 @@ export const AdminMembers: React.FC = () => {
   const [formBirthdate, setFormBirthdate] = useState('2004-01-01');
   const [formGender, setFormGender] = useState<'Male' | 'Female' | 'Prefer not to say' | 'Other'>('Male');
   const [formEducation, setFormEducation] = useState<any>('College / University');
-  const [formStatus, setFormStatus] = useState<'Active' | 'Pending' | 'Inactive'>('Active');
+  const [formStatus, setFormStatus] = useState<MembershipStatus>('Active');
   const [formPosition, setFormPosition] = useState('Youth Member');
   const [formCommittee, setFormCommittee] = useState('General Youth Volunteer');
   const [formAddress, setFormAddress] = useState('');
