@@ -1,0 +1,278 @@
+{
+  "organizationSettings": {
+    "orgName": "PAGASA GUIMBA YOUTH ORGANIZATION",
+    "tagline": "Kabataan. Pagkakaisa. Pag-asa.",
+    "subTagline": "Empowering Guimba's Youth, Building a Better Tomorrow.",
+    "logoUrl": "https://images.unsplash.com/photo-1529156069898-49953e39b3ac?auto=format&fit=crop&w=300&q=80",
+    "address": "Guimba Youth Center, Municipal Compound, Guimba, Nueva Ecija 3115",
+    "municipalHall": "Guimba Municipal Hall, Nueva Ecija, Philippines",
+    "email": "pagasa.guimbayouth@gmail.com",
+    "phone": "+63 917 554 8920 / (044) 958 1234",
+    "socialLinks": {
+      "facebook": "https://facebook.com/pagasaguimbayouth",
+      "instagram": "https://instagram.com/pagasaguimbayouth",
+      "youtube": "https://youtube.com/@pagasaguimbayouth"
+    },
+    "registrationAutoApproval": false,
+    "qrExpiryMinutes": 120,
+    "lateGracePeriodMinutes": 30,
+    "allowPublicEventRegistration": true
+  },
+  "users": [
+    {
+      "id": "usr-001",
+      "name": "Carl Vincent Ramos",
+      "email": "superadmin@pagasaguimba.org",
+      "role": "SUPER_ADMIN",
+      "avatar": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80",
+      "memberId": "PGY-2025-001",
+      "barangay": "Saint John District (Poblacion)"
+    },
+    {
+      "id": "usr-002",
+      "name": "Ma. Cristina Santos",
+      "email": "admin@pagasaguimba.org",
+      "role": "ADMIN",
+      "avatar": "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=200&q=80",
+      "memberId": "PGY-2025-002",
+      "barangay": "Santa Veronica District (Poblacion)"
+    },
+    {
+      "id": "usr-003",
+      "name": "Joshua De Guzman",
+      "email": "member@pagasaguimba.org",
+      "role": "MEMBER",
+      "avatar": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80",
+      "memberId": "PGY-2026-003",
+      "barangay": "San Roque"
+    },
+    {
+      "id": "usr-004",
+      "name": "Angela Nicole Reyes",
+      "email": "angela.reyes@gmail.com",
+      "role": "MEMBER",
+      "avatar": "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=200&q=80",
+      "memberId": "PGY-2026-004",
+      "barangay": "Bacayao"
+    }
+  ],
+  "members": [
+    {
+      "id": "mem-001",
+      "memberId": "PGY-2025-001",
+      "fullName": "Carl Vincent Ramos",
+      "email": "superadmin@pagasaguimba.org",
+      "phone": "0917-123-4567",
+      "gender": "Male",
+      "birthdate": "2001-05-14",
+      "barangay": "Saint John District (Poblacion)",
+      "address": "Zone 2, Saint John, Guimba",
+      "educationOrOccupation": "BS Information Technology - Graduate",
+      "membershipDate": "2025-01-10",
+      "status": "Active",
+      "position": "President / Super Admin",
+      "committee": "Executive Committee",
+      "avatar": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80",
+      "qrCodeToken": "QR-PGY-2025-001-TOKEN",
+      "stats": {
+        "eventsJoined": 18,
+        "attendanceRate": 98,
+        "communityHours": 72
+      }
+    },
+    {
+      "id": "mem-002",
+      "memberId": "PGY-2025-002",
+      "fullName": "Ma. Cristina Santos",
+      "email": "admin@pagasaguimba.org",
+      "phone": "0918-234-5678",
+      "gender": "Female",
+      "birthdate": "2002-09-22",
+      "barangay": "Santa Veronica District (Poblacion)",
+      "address": "Poblacion Plaza, Guimba",
+      "educationOrOccupation": "BS Public Administration - Senior",
+      "membershipDate": "2025-01-15",
+      "status": "Active",
+      "position": "Vice President / Admin",
+      "committee": "Community Outreach",
+      "avatar": "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=200&q=80",
+      "qrCodeToken": "QR-PGY-2025-002-TOKEN",
+      "stats": {
+        "eventsJoined": 16,
+        "attendanceRate": 94,
+        "communityHours": 60
+      }
+    },
+    {
+      "id": "mem-003",
+      "memberId": "PGY-2026-003",
+      "fullName": "Joshua De Guzman",
+      "email": "member@pagasaguimba.org",
+      "phone": "0920-345-6789",
+      "gender": "Male",
+      "birthdate": "2004-03-18",
+      "barangay": "San Roque",
+      "address": "Purok 3, San Roque, Guimba",
+      "educationOrOccupation": "BS Agriculture - 2nd Year",
+      "membershipDate": "2026-02-01",
+      "status": "Active",
+      "position": "Youth Member",
+      "committee": "Environmental Affairs",
+      "avatar": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80",
+      "qrCodeToken": "QR-PGY-2026-003-TOKEN",
+      "stats": {
+        "eventsJoined": 9,
+        "attendanceRate": 89,
+        "communityHours": 36
+      }
+    },
+    {
+      "id": "mem-004",
+      "memberId": "PGY-2026-004",
+      "fullName": "Angela Nicole Reyes",
+      "email": "angela.reyes@gmail.com",
+      "phone": "0929-456-7890",
+      "gender": "Female",
+      "birthdate": "2005-11-04",
+      "barangay": "Bacayao",
+      "address": "Purok 1, Bacayao, Guimba",
+      "educationOrOccupation": "Grade 12 STEM - Guimba National HS",
+      "membershipDate": "2026-02-10",
+      "status": "Active",
+      "position": "Youth Member",
+      "committee": "Education & Literacy",
+      "avatar": "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=200&q=80",
+      "qrCodeToken": "QR-PGY-2026-004-TOKEN",
+      "stats": {
+        "eventsJoined": 7,
+        "attendanceRate": 100,
+        "communityHours": 28
+      }
+    }
+  ],
+  "events": [
+    {
+      "id": "evt-001",
+      "title": "PAGASA Guimba Youth Leadership Summit 2026",
+      "category": "Leadership",
+      "description": "Annual municipal-wide youth empowerment summit convening youth leaders across all 64 barangays of Guimba.",
+      "bannerImage": "https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=1200&q=80",
+      "date": "2026-09-15",
+      "time": "08:00 AM - 05:00 PM",
+      "location": "Guimba Municipal Gymnasium",
+      "venue": "Main Multi-Purpose Arena",
+      "organizer": "PAGASA Guimba Youth Organization",
+      "maxParticipants": 350,
+      "currentParticipants": 142,
+      "registrationEnabled": true,
+      "status": "Upcoming",
+      "isPublished": true,
+      "speakers": [
+        { "name": "Hon. Municipal Mayor", "title": "Keynote Speaker" },
+        { "name": "Youth Council President", "title": "Youth Empowerment Speaker" }
+      ],
+      "agenda": [
+        { "time": "08:00 AM", "title": "Registration & QR Check-in" },
+        { "time": "09:00 AM", "title": "Opening Plenary" },
+        { "time": "01:00 PM", "title": "Breakout Workshops" },
+        { "time": "04:30 PM", "title": "Awarding of Certificates" }
+      ]
+    },
+    {
+      "id": "evt-002",
+      "title": "Tree Planting & Eco-Camp Guimba 2026",
+      "category": "Environment",
+      "description": "Reforestation initiative planting 2,500 indigenous seedlings across Mount Bitas and riverside barangays.",
+      "bannerImage": "https://images.unsplash.com/photo-1511497584788-87676104235f?auto=format&fit=crop&w=1200&q=80",
+      "date": "2026-09-22",
+      "time": "06:00 AM - 12:00 PM",
+      "location": "Barangay Nagpandayan Watershed Area",
+      "venue": "Eco Reserve Ground",
+      "organizer": "PAGASA Guimba & MENRO Guimba",
+      "maxParticipants": 200,
+      "currentParticipants": 88,
+      "registrationEnabled": true,
+      "status": "Upcoming",
+      "isPublished": true,
+      "agenda": [
+        { "time": "06:00 AM", "title": "Assembly at Guimba Municipal Plaza" },
+        { "time": "07:00 AM", "title": "Planting Activity" },
+        { "time": "11:00 AM", "title": "Boodle Fight & Wrap-up" }
+      ]
+    }
+  ],
+  "projects": [
+    {
+      "id": "prj-001",
+      "title": "Project Dunong: Mobile Library & STEM Hub",
+      "category": "Education",
+      "description": "Providing solar-powered digital tablets and curated book collections to remote elementary schools in Guimba.",
+      "leader": "Angela Nicole Reyes",
+      "barangay": "All 64 Barangays",
+      "status": "Ongoing",
+      "progress": 75,
+      "startDate": "2026-03-01",
+      "targetEndDate": "2026-11-30",
+      "budget": 250000,
+      "beneficiaries": 1800,
+      "imageUrl": "https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&w=800&q=80"
+    },
+    {
+      "id": "prj-002",
+      "title": "Lingap Kalikasan: Barangay Green Zones",
+      "category": "Environment",
+      "description": "Establishing community composting hubs and tree nurseries across Guimba barangays.",
+      "leader": "Joshua De Guzman",
+      "barangay": "Nagpandayan",
+      "status": "Ongoing",
+      "progress": 60,
+      "startDate": "2026-04-15",
+      "targetEndDate": "2026-10-31",
+      "budget": 120000,
+      "beneficiaries": 950,
+      "imageUrl": "https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?auto=format&fit=crop&w=800&q=80"
+    }
+  ],
+  "announcements": [
+    {
+      "id": "ann-001",
+      "title": "Registration Open: PAGASA Guimba Youth Leadership Summit 2026",
+      "category": "Important Notice",
+      "date": "2026-09-01",
+      "author": "Carl Vincent Ramos",
+      "authorRole": "President",
+      "featuredImage": "https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=1000&q=80",
+      "summary": "Calling all SK chairpersons, youth organization officers, and student leaders across Guimba to register for the 2026 Leadership Summit.",
+      "content": "We are officially opening registrations for our biggest gathering of the year! Participants will receive official certificates of participation, summit kits, and meals. Scan your digital member QR to register instantly.",
+      "isPublished": true,
+      "isPinned": true,
+      "views": 1420
+    }
+  ],
+  "officials": [
+    {
+      "id": "off-001",
+      "fullName": "Carl Vincent Ramos",
+      "position": "President",
+      "committee": "Executive Committee",
+      "barangay": "Saint John District (Poblacion)",
+      "term": "2025 - 2028",
+      "contact": "+63 917 123 4567",
+      "email": "president@pagasaguimba.org",
+      "imageUrl": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80",
+      "orderPriority": 1
+    },
+    {
+      "id": "off-002",
+      "fullName": "Ma. Cristina Santos",
+      "position": "Vice President",
+      "committee": "Community Affairs",
+      "barangay": "Santa Veronica District (Poblacion)",
+      "term": "2025 - 2028",
+      "contact": "+63 918 234 5678",
+      "email": "vp@pagasaguimba.org",
+      "imageUrl": "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=300&q=80",
+      "orderPriority": 2
+    }
+  ]
+}
