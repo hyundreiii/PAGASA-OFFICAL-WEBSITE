@@ -34,13 +34,13 @@ jobs:
             npm install
           fi
 
+      - name: Build project
+        run: npm run build
+
       - name: Setup Pages
         uses: actions/configure-pages@v5
-
-      - name: Build project
-        run: |
-          npm run build
-          cp dist/index.html dist/404.html
+        with:
+          enablement: true
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
-import { Project, ProjectStatus } from '../../types';
+import { Project } from '../../types';
 import { 
   FolderGit2, 
   Plus, 
@@ -27,7 +27,7 @@ export const AdminProjects: React.FC = () => {
   const [description, setDescription] = useState('');
   const [leader, setLeader] = useState('');
   const [progress, setProgress] = useState(50);
-  const [status, setStatus] = useState<ProjectStatus>('Ongoing');
+  const [status, setStatus] = useState<'Planning' | 'Ongoing' | 'Completed'>('Ongoing');
   const [image, setImage] = useState('https://images.unsplash.com/photo-1577896851231-70ef18881754?auto=format&fit=crop&w=800&q=80');
 
   const filteredProjects = projects.filter(p => {

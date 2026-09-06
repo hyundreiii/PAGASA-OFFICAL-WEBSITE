@@ -93,7 +93,7 @@ export const AnnouncementsPage: React.FC = () => {
                   </span>
                 )}
                 <span className={`text-[10px] font-extrabold uppercase px-2.5 py-0.5 rounded-full ${
-                  ann.category === 'Emergency' || ann.category === 'Important Notice' ? 'bg-rose-100 text-rose-800' : 'bg-blue-100 text-blue-800'
+                  ann.category === 'Urgent Advisory' ? 'bg-rose-100 text-rose-800' : 'bg-blue-100 text-blue-800'
                 }`}>
                   {ann.category}
                 </span>

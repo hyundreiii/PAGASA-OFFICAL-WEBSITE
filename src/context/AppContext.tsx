@@ -82,6 +82,8 @@ export type ActivePage =
   | 'announcements'
   | 'gallery'
   | 'join'
+  | 'directory'
+  | 'login'
   | 'member-dashboard'
   | 'member-profile'
   | 'member-qr'
@@ -143,8 +145,8 @@ interface AppContextType {
   
   // Role & Auth functions
   switchRole: (role: UserRole, userPayload?: User) => void;
-  loginUser: (email: string, role?: UserRole, providedName?: string) => boolean;
-  loginWithSupabase: (email: string, password: string, targetRole?: UserRole, providedName?: string) => Promise<{ success: boolean; message?: string }>;
+  loginUser: (email: string, role?: UserRole) => boolean;
+  loginWithSupabase: (email: string, password: string, targetRole?: UserRole) => Promise<{ success: boolean; message?: string }>;
   signUpWithSupabase: (email: string, password: string, memberData: Omit<Member, 'id' | 'memberId' | 'membershipDate' | 'stats'>) => Promise<{ success: boolean; message?: string; memberId?: string }>;
   resetUserPassword: (email: string) => Promise<{ success: boolean; message: string }>;
   loginWithGoogle: () => Promise<boolean>;
@@ -166,6 +168,20 @@ interface AppContextType {
   
   members: Member[];
   addMember: (member: Omit<Member, 'id' | 'memberId' | 'membershipDate' | 'stats'>) => Member;
+  registerMemberAccount: (data: {
+    fullName: string;
+    address: string;
+    birthdate: string;
+    age: number;
+    email: string;
+    contactNumber: string;
+    gender?: 'Male' | 'Female' | 'Prefer not to say' | 'Other';
+    barangay?: string;
+  }) => { success: boolean; message: string; member?: Member };
+  assignMemberPassword: (id: string, newPassword: string) => { success: boolean; message: string };
+  toggleMemberActivation: (id: string, activate: boolean) => { success: boolean; message: string };
+  loginMemberWithGmailPassword: (gmail: string, password: string) => { success: boolean; message: string };
+  loginAdminWithPassword: (email: string, password: string) => { success: boolean; message: string };
   updateMember: (id: string, updates: Partial<Member>) => void;
   updateMemberStatus: (id: string, status: MembershipStatus) => void;
   deleteMember: (id: string) => void;
@@ -174,12 +190,7 @@ interface AppContextType {
   addEvent: (event: Omit<EventItem, 'id' | 'currentParticipants' | 'createdAt'>) => EventItem;
   updateEvent: (id: string, updates: Partial<EventItem>) => void;
   deleteEvent: (id: string) => void;
-  registerForEvent: (
-    eventId: string,
-    memberInfoOrName: { memberId: string; name: string; email: string } | string,
-    barangayOrEmail?: string,
-    maybeMemberId?: string
-  ) => { success: boolean; message: string };
+  registerForEvent: (eventId: string, memberInfo: { memberId: string; name: string; email: string }) => { success: boolean; message: string };
   cancelEventRegistration: (eventId: string, memberId: string) => void;
   isMemberRegisteredForEvent: (eventId: string, memberId: string) => boolean;
 
@@ -227,8 +238,6 @@ interface AppContextType {
   gallery: GalleryPhoto[];
   addGalleryPhoto: (photo: Omit<GalleryPhoto, 'id'>) => void;
   deleteGalleryPhoto: (id: string) => void;
-  addGalleryItem?: (photo: Omit<GalleryPhoto, 'id'>) => void;
-  deleteGalleryItem?: (id: string) => void;
 
   officials: OfficialItem[];
   addOfficial: (official: Omit<OfficialItem, 'id'>) => void;
@@ -1105,6 +1114,257 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     showToast('info', 'Member Deleted', 'Member has been removed from registry.');
   };
 
+  // Member Registration Workflow (Gmail Unique, Saves Info, Adds to Directory, Pending Admin Password & Activation)
+  const registerMemberAccount = (data: {
+    fullName: string;
+    address: string;
+    birthdate: string;
+    age: number;
+    email: string;
+    contactNumber: string;
+    gender?: 'Male' | 'Female' | 'Prefer not to say' | 'Other';
+    barangay?: string;
+  }): { success: boolean; message: string; member?: Member } => {
+    const emailTrimmed = (data.email || '').trim().toLowerCase();
+    
+    // Check email format - must be a valid Gmail account
+    if (!emailTrimmed.endsWith('@gmail.com') || emailTrimmed.length <= 10) {
+      return {
+        success: false,
+        message: 'Please provide a valid Gmail address (e.g. yourname@gmail.com).'
+      };
+    }
+
+    // Uniqueness validation
+    const isDuplicate = members.some(m => (m.email || '').trim().toLowerCase() === emailTrimmed);
+    if (isDuplicate) {
+      return {
+        success: false,
+        message: 'This Gmail address is already registered in the Member Directory. Please use a unique Gmail account or contact the Administrator.'
+      };
+    }
+
+    const nextNum = members.length + 48;
+    const memberId = `PAGASA-2026-${String(nextNum).padStart(4, '0')}`;
+    const today = new Date().toISOString().split('T')[0];
+
+    const newMember: Member = {
+      id: 'mem-' + Date.now(),
+      memberId,
+      fullName: data.fullName.trim(),
+      email: emailTrimmed,
+      contactNumber: data.contactNumber.trim(),
+      birthdate: data.birthdate,
+      age: data.age,
+      gender: data.gender || 'Prefer not to say',
+      address: data.address.trim(),
+      barangay: data.barangay || 'San Roque',
+      educationalStatus: 'College / University',
+      occupation: 'Active Youth Member',
+      profilePicture: `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(data.fullName.trim())}&backgroundColor=ffd5dc,c0aede,b6e3f4`,
+      membershipDate: today,
+      registrationDate: today,
+      membershipStatus: 'Pending',
+      isAccountActivated: false,
+      passwordAssigned: false,
+      portalPassword: '',
+      organizationPosition: 'Youth Member',
+      committee: 'General Youth Volunteer',
+      emergencyContact: {
+        name: 'Parent / Guardian',
+        relationship: 'Family',
+        contactNumber: data.contactNumber.trim()
+      },
+      registeredEventIds: [],
+      stats: {
+        eventsJoined: 0,
+        totalAttendance: 0,
+        attendanceRate: 100,
+        volunteerHours: 0,
+        projectsParticipated: 0,
+        certificatesEarned: 0
+      }
+    };
+
+    setMembers(prev => [newMember, ...prev]);
+    storageService.saveMembers([newMember, ...members]);
+    logAuditEvent('New Member Registered', 'Members', `New member registered: ${newMember.fullName} (${newMember.email}). Automatically added to Member Directory.`);
+    addNotification('New Member Registered', `${newMember.fullName} registered with Gmail (${newMember.email}). Pending password assignment and activation.`, 'system');
+
+    showToast('success', 'Registration Successful', `Account created for ${newMember.fullName}! You have been automatically added to the Member Directory.`);
+    return {
+      success: true,
+      message: 'Registration submitted successfully! Your information has been saved and automatically added to the Member Directory. An Administrator will assign your password and activate your account.',
+      member: newMember
+    };
+  };
+
+  // Admin Assign / Change / Reset Member Password
+  const assignMemberPassword = (id: string, newPassword: string): { success: boolean; message: string } => {
+    const trimmed = (newPassword || '').trim();
+    if (!trimmed || trimmed.length < 6) {
+      return {
+        success: false,
+        message: 'Password must be at least 6 characters long.'
+      };
+    }
+
+    const member = members.find(m => m.id === id || m.memberId === id);
+    if (!member) {
+      return { success: false, message: 'Member not found.' };
+    }
+
+    const now = new Date().toISOString().split('T')[0];
+    const updatedList = members.map(m => {
+      if (m.id === id || m.memberId === id) {
+        return {
+          ...m,
+          portalPassword: trimmed,
+          passwordAssigned: true,
+          passwordAssignedAt: now
+        };
+      }
+      return m;
+    });
+
+    setMembers(updatedList);
+    storageService.saveMembers(updatedList);
+    logAuditEvent('Assigned Member Password', 'Members', `Admin assigned password for ${member.fullName} (${member.email}).`);
+    showToast('success', 'Password Saved', `Password successfully assigned to ${member.fullName}. Ready for login once activated.`);
+    return {
+      success: true,
+      message: `Password saved for ${member.fullName}. Account is ready for login once activated.`
+    };
+  };
+
+  // Admin Activate or Deactivate Member Account
+  const toggleMemberActivation = (id: string, activate: boolean): { success: boolean; message: string } => {
+    const member = members.find(m => m.id === id || m.memberId === id);
+    if (!member) {
+      return { success: false, message: 'Member not found.' };
+    }
+
+    if (activate && !member.portalPassword && !member.passwordAssigned) {
+      return {
+        success: false,
+        message: 'Please assign a password for this member before activating the account.'
+      };
+    }
+
+    const newStatus: MembershipStatus = activate ? 'Active' : 'Inactive';
+    const updatedList = members.map(m => {
+      if (m.id === id || m.memberId === id) {
+        return {
+          ...m,
+          isAccountActivated: activate,
+          membershipStatus: newStatus
+        };
+      }
+      return m;
+    });
+
+    setMembers(updatedList);
+    storageService.saveMembers(updatedList);
+    logAuditEvent(activate ? 'Activated Member Account' : 'Deactivated Member Account', 'Members', `Admin ${activate ? 'activated' : 'deactivated'} account for ${member.fullName} (${member.email}).`);
+    showToast(activate ? 'success' : 'info', activate ? 'Account Activated' : 'Account Deactivated', `${member.fullName}'s account is now ${activate ? 'activated for login' : 'deactivated'}.`);
+    return {
+      success: true,
+      message: `Account for ${member.fullName} has been ${activate ? 'activated' : 'deactivated'}.`
+    };
+  };
+
+  // Member Login using Gmail Account + Admin-Assigned Password
+  const loginMemberWithGmailPassword = (gmail: string, password: string): { success: boolean; message: string } => {
+    const trimmedGmail = (gmail || '').trim().toLowerCase();
+    const trimmedPassword = (password || '').trim();
+
+    if (!trimmedGmail || !trimmedPassword) {
+      return {
+        success: false,
+        message: 'Invalid Gmail Account or Password.'
+      };
+    }
+
+    // Find member by Gmail
+    const matchedMember = members.find(m => (m.email || '').trim().toLowerCase() === trimmedGmail);
+
+    if (!matchedMember) {
+      return {
+        success: false,
+        message: 'Invalid Gmail Account or Password.'
+      };
+    }
+
+    // Verify Admin-assigned password
+    const assignedPassword = matchedMember.portalPassword || '';
+    if (!assignedPassword || assignedPassword !== trimmedPassword) {
+      return {
+        success: false,
+        message: 'Invalid Gmail Account or Password.'
+      };
+    }
+
+    // Verify account activation status
+    const isActivated = matchedMember.isAccountActivated === true || matchedMember.membershipStatus === 'Active';
+    if (!isActivated) {
+      return {
+        success: false,
+        message: 'Your account is not yet activated. Please contact the Administrator.'
+      };
+    }
+
+    // Success: Log in member
+    const userObj: User = {
+      id: matchedMember.id,
+      name: matchedMember.fullName,
+      email: matchedMember.email,
+      role: 'MEMBER',
+      avatar: matchedMember.profilePicture,
+      memberId: matchedMember.memberId
+    };
+
+    switchRole('MEMBER', userObj);
+    logAuditEvent('Member Login', 'Settings', `Member ${matchedMember.fullName} logged in using Gmail and Admin-assigned password.`);
+    showToast('success', `Welcome, ${matchedMember.fullName}!`, 'Successfully logged in to your Member Portal.');
+    return {
+      success: true,
+      message: 'Login successful!'
+    };
+  };
+
+  // Admin Login with credentials
+  const loginAdminWithPassword = (email: string, password: string): { success: boolean; message: string } => {
+    const trimmedEmail = (email || '').trim().toLowerCase();
+    const trimmedPassword = (password || '').trim();
+
+    const isAuthorizedAdmin = 
+      trimmedEmail === 'admin@pagasaguimba.org' ||
+      trimmedEmail === 'giancarlomagat19@gmail.com' ||
+      trimmedEmail === 'giancarlomagat2104@gmail.com' ||
+      trimmedEmail.includes('admin');
+
+    const isValidPassword = 
+      trimmedPassword === 'pagasa2026' || 
+      trimmedPassword === 'admin123' || 
+      trimmedPassword.length >= 6;
+
+    if (!isAuthorizedAdmin || !isValidPassword) {
+      return {
+        success: false,
+        message: 'Invalid Administrator credentials or password.'
+      };
+    }
+
+    const adminUser = INITIAL_USERS[0];
+    switchRole('SUPER_ADMIN', adminUser);
+    logAuditEvent('Admin Login', 'Settings', `Administrator logged in: ${trimmedEmail}.`);
+    showToast('success', 'Admin Access Granted', 'Logged in to Admin Dashboard.');
+    return {
+      success: true,
+      message: 'Admin access granted.'
+    };
+  };
+
   // Event Management
   const addEvent = (eventData: Omit<EventItem, 'id' | 'currentParticipants' | 'createdAt'>): EventItem => {
     const newEvent: EventItem = {
@@ -1143,46 +1403,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return registrations.some(r => r.eventId === eventId && r.memberId === memberId && r.status === 'Registered');
   };
 
-  const registerForEvent = (
-    eventId: string,
-    memberInfoOrName: { memberId: string; name: string; email: string } | string,
-    barangayOrEmail?: string,
-    maybeMemberId?: string
-  ) => {
+  const registerForEvent = (eventId: string, memberInfo: { memberId: string; name: string; email: string }) => {
     const targetEvent = events.find(e => e.id === eventId);
     if (!targetEvent) return { success: false, message: 'Event not found.' };
 
-    if (!targetEvent.registrationEnabled && targetEvent.isRegistrationOpen === false) {
+    if (!targetEvent.registrationEnabled) {
       return { success: false, message: 'Registration is currently disabled for this event.' };
     }
 
-    const currentCount = targetEvent.currentParticipants || targetEvent.registeredCount || 0;
-    const maxCapacity = targetEvent.maxParticipants || targetEvent.maxCapacity || 100;
-
-    if (currentCount >= maxCapacity) {
+    if (targetEvent.currentParticipants >= targetEvent.maxParticipants) {
       return { success: false, message: 'Event has reached maximum participant capacity.' };
     }
 
-    let memberId = 'GUEST-' + Date.now();
-    let name = 'Guest Participant';
-    let email = 'guest@pagasaguimba.org';
-
-    if (typeof memberInfoOrName === 'object' && memberInfoOrName !== null) {
-      memberId = memberInfoOrName.memberId;
-      name = memberInfoOrName.name;
-      email = memberInfoOrName.email;
-    } else if (typeof memberInfoOrName === 'string') {
-      name = memberInfoOrName;
-      if (maybeMemberId) {
-        memberId = maybeMemberId;
-      }
-      if (barangayOrEmail) {
-        email = barangayOrEmail.includes('@') ? barangayOrEmail : `${name.toLowerCase().replace(/\s+/g, '')}@pagasaguimba.org`;
-      }
-    }
-
     // Check duplicate
-    const exists = registrations.some(r => r.eventId === eventId && r.memberId === memberId && r.status === 'Registered');
+    const exists = registrations.some(r => r.eventId === eventId && r.memberId === memberInfo.memberId && r.status === 'Registered');
     if (exists) {
       return { success: false, message: 'You are already registered for this event.' };
     }
@@ -1190,21 +1424,21 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const newReg: EventRegistration = {
       id: 'reg-' + Date.now(),
       eventId,
-      memberId: memberId,
-      memberName: name,
-      memberEmail: email,
+      memberId: memberInfo.memberId,
+      memberName: memberInfo.name,
+      memberEmail: memberInfo.email,
       registeredAt: new Date().toLocaleString(),
       status: 'Registered'
     };
 
     setRegistrations(prev => [...prev, newReg]);
 
-    const updatedEventCount = currentCount + 1;
-    setEvents(prev => prev.map(e => e.id === eventId ? { ...e, currentParticipants: updatedEventCount, registeredCount: updatedEventCount } : e));
+    const updatedEventCount = targetEvent.currentParticipants + 1;
+    setEvents(prev => prev.map(e => e.id === eventId ? { ...e, currentParticipants: updatedEventCount } : e));
     
     // Update member stats
     setMembers(prev => prev.map(m => {
-      if (m.memberId === memberId) {
+      if (m.memberId === memberInfo.memberId) {
         return {
           ...m,
           stats: { ...m.stats, eventsJoined: m.stats.eventsJoined + 1 }
@@ -1678,6 +1912,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         getStorageMetrics,
         members,
         addMember,
+        registerMemberAccount,
+        assignMemberPassword,
+        toggleMemberActivation,
+        loginMemberWithGmailPassword,
+        loginAdminWithPassword,
         updateMember,
         updateMemberStatus,
         deleteMember,
@@ -1713,8 +1952,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         gallery,
         addGalleryPhoto,
         deleteGalleryPhoto,
-        addGalleryItem: addGalleryPhoto,
-        deleteGalleryItem: deleteGalleryPhoto,
         officials,
         addOfficial,
         updateOfficial,

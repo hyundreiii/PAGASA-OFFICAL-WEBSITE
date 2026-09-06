@@ -259,7 +259,7 @@ export const MemberLayout: React.FC<MemberLayoutProps> = ({ children }) => {
         {/* Sidebar Footer Controls */}
         <div className="p-4 border-t border-slate-200 space-y-2 bg-slate-50/70">
           {/* Admin Switcher if role allows */}
-          {(currentRole === 'SUPER_ADMIN' || currentRole === 'ADMIN') && (
+          {(currentRole === 'SUPER_ADMIN' || currentRole === 'ADMIN' || currentRole === 'EVENT_STAFF') && (
             <button
               onClick={() => {
                 setCurrentPage('admin-dashboard');

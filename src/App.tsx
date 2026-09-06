@@ -19,6 +19,8 @@ import { ActivitiesPage } from './components/public/ActivitiesPage';
 import { AnnouncementsPage } from './components/public/AnnouncementsPage';
 import { GalleryPage } from './components/public/GalleryPage';
 import { JoinPage } from './components/public/JoinPage';
+import { MemberDirectoryPage } from './components/public/MemberDirectoryPage';
+import { MemberLoginPage } from './components/public/MemberLoginPage';
 
 // Member Layout & Pages
 import { MemberLayout } from './components/member/MemberLayout';
@@ -304,6 +306,12 @@ const PageRenderer: React.FC = () => {
       break;
     case 'join':
       publicContent = <JoinPage />;
+      break;
+    case 'directory':
+      publicContent = <MemberDirectoryPage />;
+      break;
+    case 'login':
+      publicContent = <MemberLoginPage />;
       break;
     default:
       publicContent = <PublicHomePage />;

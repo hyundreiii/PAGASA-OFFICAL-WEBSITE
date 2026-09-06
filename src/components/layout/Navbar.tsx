@@ -54,6 +54,7 @@ export const Navbar: React.FC = () => {
 
   const navLinks: { label: string; page: ActivePage; icon: any }[] = [
     { label: 'Home', page: 'home', icon: Sparkles },
+    { label: 'Member Directory', page: 'directory', icon: Users },
     { label: 'About Us', page: 'about', icon: Users },
     { label: 'Officials', page: 'officials', icon: Shield },
     { label: 'Events', page: 'events', icon: Calendar },
@@ -339,10 +340,7 @@ export const Navbar: React.FC = () => {
               <div className="flex items-center gap-1 sm:gap-2">
                 <button
                   type="button"
-                  onClick={() => {
-                    setAuthModalMode('login');
-                    setIsAuthModalOpen(true);
-                  }}
+                  onClick={() => setCurrentPage('login')}
                   className="px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold text-slate-700 hover:text-blue-700 hover:bg-blue-50 transition-colors flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
                 >
                   <LogIn className="w-4 h-4" />
@@ -350,10 +348,7 @@ export const Navbar: React.FC = () => {
                 </button>
                 <button
                   type="button"
-                  onClick={() => {
-                    setAuthModalMode('register');
-                    setIsAuthModalOpen(true);
-                  }}
+                  onClick={() => setCurrentPage('join')}
                   className="px-3.5 py-2 rounded-xl text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-600/20 transition-all hidden md:flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
                 >
                   <User className="w-4 h-4" />

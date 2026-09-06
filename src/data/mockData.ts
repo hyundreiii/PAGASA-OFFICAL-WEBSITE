@@ -242,6 +242,42 @@ export const INITIAL_OFFICIALS: OfficialItem[] = [
 
 export const INITIAL_MEMBERS: Member[] = [
   {
+    id: 'mem-new-1',
+    memberId: 'PAGASA-2026-0099',
+    fullName: 'Jasmine Reyes',
+    email: 'jasmine.reyes@gmail.com',
+    contactNumber: '0917-223-3445',
+    birthdate: '2005-04-12',
+    age: 21,
+    gender: 'Female',
+    address: 'Purok 4, Barangay San Andres, Guimba',
+    barangay: 'San Andres',
+    educationalStatus: 'College / University',
+    occupation: 'BS Accountancy Student',
+    profilePicture: 'https://api.dicebear.com/7.x/adventurer/svg?seed=Jasmine&backgroundColor=ffd5dc,c0aede',
+    membershipDate: '2026-03-01',
+    registrationDate: '2026-03-01',
+    membershipStatus: 'Pending',
+    isAccountActivated: false,
+    passwordAssigned: false,
+    portalPassword: '',
+    organizationPosition: 'Youth Member',
+    committee: 'General Youth Volunteer',
+    emergencyContact: {
+      name: 'Eduardo Reyes',
+      relationship: 'Father',
+      contactNumber: '0917-111-2233'
+    },
+    stats: {
+      eventsJoined: 0,
+      totalAttendance: 0,
+      attendanceRate: 100,
+      volunteerHours: 0,
+      projectsParticipated: 0,
+      certificatesEarned: 0
+    }
+  },
+  {
     id: 'mem-1',
     memberId: 'PAGASA-2026-0042',
     fullName: 'Juan Dela Cruz',
@@ -256,7 +292,11 @@ export const INITIAL_MEMBERS: Member[] = [
     occupation: 'BS Information Technology Student',
     profilePicture: 'https://api.dicebear.com/7.x/adventurer/svg?seed=Jordan&backgroundColor=c0aede,b6e3f4,ffd5dc',
     membershipDate: '2025-01-15',
+    registrationDate: '2025-01-15',
     membershipStatus: 'Active',
+    isAccountActivated: true,
+    passwordAssigned: true,
+    portalPassword: 'pagasa2026',
     organizationPosition: 'Youth Member',
     committee: 'Media & Public Relations',
     emergencyContact: {
@@ -288,7 +328,11 @@ export const INITIAL_MEMBERS: Member[] = [
     occupation: 'Education Major',
     profilePicture: 'https://api.dicebear.com/7.x/adventurer/svg?seed=Maya&backgroundColor=ffd5dc,ffdfbf,d1d4f9',
     membershipDate: '2025-02-10',
+    registrationDate: '2025-02-10',
     membershipStatus: 'Active',
+    isAccountActivated: true,
+    passwordAssigned: true,
+    portalPassword: 'pagasa2026',
     organizationPosition: 'Youth Member',
     committee: 'Education & TVET',
     emergencyContact: {

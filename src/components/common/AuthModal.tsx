@@ -2,18 +2,13 @@ import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { GUIMBA_BARANGAYS } from '../../data/mockData';
 import { PagasaLogo } from './PagasaLogo';
-import { X, Lock, Mail, User, Phone, Calendar, Shield, ArrowRight, CheckCircle2, Loader2, Sparkles, KeyRound, Check, HelpCircle } from 'lucide-react';
+import { X, Lock, Mail, User, Phone, Calendar, Shield, ArrowRight, CheckCircle2, Loader2, Sparkles, KeyRound, Check, HelpCircle, AlertCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import confetti from 'canvas-confetti';
 
-interface AuthModalProps {
-  isOpen?: boolean;
-  onClose?: () => void;
-}
-
-export const AuthModal: React.FC<AuthModalProps> = ({ isOpen: propIsOpen, onClose: propOnClose }) => {
+export const AuthModal: React.FC = () => {
   const {
-    isAuthModalOpen: contextIsOpen,
+    isAuthModalOpen,
     setIsAuthModalOpen,
     authModalMode,
     setAuthModalMode,
@@ -21,21 +16,19 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen: propIsOpen, onClos
     signUpWithSupabase,
     resetUserPassword,
     loginWithGoogle,
+    loginMemberWithGmailPassword,
+    loginAdminWithPassword,
+    setCurrentPage,
     members,
     switchRole
   } = useApp();
-
-  const isAuthModalOpen = propIsOpen !== undefined ? propIsOpen : contextIsOpen;
-  const handleClose = () => {
-    if (propOnClose) propOnClose();
-    setIsAuthModalOpen(false);
-  };
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [showForgotModal, setShowForgotModal] = useState(false);
   const [forgotEmail, setForgotEmail] = useState('');
   const [forgotStatus, setForgotStatus] = useState<'idle' | 'loading' | 'success'>('idle');
+  const [authError, setAuthError] = useState('');
 
   // Login form state
   const [loginEmail, setLoginEmail] = useState('');
@@ -77,12 +70,23 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen: propIsOpen, onClos
     e.preventDefault();
     if (!loginEmail.trim()) return;
 
+    setAuthError('');
     setIsSubmitting(true);
     try {
-      const targetRole = authModalMode === 'admin-login' ? 'SUPER_ADMIN' : 'MEMBER';
-      const res = await loginWithSupabase(loginEmail.trim(), loginPassword || 'pagasa2026', targetRole, loginFullName);
-      if (res.success) {
-        setIsAuthModalOpen(false);
+      if (authModalMode === 'admin-login') {
+        const adminRes = loginAdminWithPassword(loginEmail.trim(), loginPassword);
+        if (adminRes.success) {
+          setIsAuthModalOpen(false);
+        } else {
+          setAuthError(adminRes.message);
+        }
+      } else {
+        const memRes = loginMemberWithGmailPassword(loginEmail.trim(), loginPassword);
+        if (memRes.success) {
+          setIsAuthModalOpen(false);
+        } else {
+          setAuthError(memRes.message);
+        }
       }
     } finally {
       setIsSubmitting(false);
@@ -322,12 +326,11 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen: propIsOpen, onClos
                 Admin Portal
               </button>
               <button
-                onClick={() => setAuthModalMode('register')}
-                className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer ${
-                  authModalMode === 'register'
-                    ? 'bg-white text-blue-700 shadow-sm'
-                    : 'text-slate-600 hover:text-slate-900'
-                }`}
+                onClick={() => {
+                  setIsAuthModalOpen(false);
+                  setCurrentPage('join');
+                }}
+                className="flex-1 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer text-slate-600 hover:text-blue-700 hover:bg-slate-50"
               >
                 Join Organization
               </button>
@@ -336,6 +339,12 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen: propIsOpen, onClos
             {/* Login Form (Member or Admin) */}
             {(authModalMode === 'login' || authModalMode === 'admin-login') && (
               <form onSubmit={handleLoginSubmit} className="space-y-4">
+                {authError && (
+                  <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-red-800 text-xs flex items-center gap-2">
+                    <AlertCircle className="w-4 h-4 text-red-600 flex-shrink-0" />
+                    <span>{authError}</span>
+                  </div>
+                )}
                 {/* 1-Click Google Sign In */}
                 <button
                   type="button"

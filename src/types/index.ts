@@ -27,8 +27,6 @@ export interface User {
   role: UserRole;
   avatar: string;
   memberId?: string;
-  barangay?: string;
-  registeredEventIds?: string[];
 }
 
 export interface Member {
@@ -50,6 +48,10 @@ export interface Member {
   organizationPosition?: string;
   committee?: string;
   portalPassword?: string;
+  isAccountActivated?: boolean;
+  passwordAssigned?: boolean;
+  passwordAssignedAt?: string;
+  registrationDate?: string;
   gmailAccessEnabled?: boolean;
   portalAccessRole?: 'MEMBER' | 'ADMIN' | 'COORDINATOR';
   dateJoined?: string;
@@ -88,15 +90,13 @@ export interface EventItem {
   bannerImage: string;
   date: string;
   time: string;
-  startDate?: string;
-  startTime?: string;
-  location?: string;
+  location: string;
   venue?: string;
   organizer: string;
   description: string;
   objectives?: string[];
   requirements?: string[];
-  maxParticipants?: number;
+  maxParticipants: number;
   maxCapacity?: number;
   currentParticipants: number;
   registeredCount?: number;
@@ -104,31 +104,26 @@ export interface EventItem {
   registrationEnabled?: boolean;
   isRegistrationOpen?: boolean;
   status: EventStatus;
-  isPublished?: boolean;
+  isPublished: boolean;
   qrCodeSecret?: string;
   createdAt?: string;
-  speakers?: { name: string; title?: string; role?: string; affiliation?: string; avatar?: string }[];
+  speakers?: { name: string; title: string; avatar?: string }[];
   agenda?: { time: string; title: string }[];
-  schedule?: { time: string; activity?: string; title?: string; speaker?: string }[];
 }
 
 export interface AttendanceRecord {
   id: string;
   sessionId: string;
-  sessionTitle?: string;
   eventId: string;
   eventTitle: string;
   memberId: string;
   memberName: string;
   memberBarangay: string;
   checkInTime: string;
-  timeIn?: string;
-  timestamp?: string;
   date: string;
   status: AttendanceStatus;
   method: 'QR_SCAN' | 'MANUAL' | 'SEARCH';
   recordedBy: string;
-  verifiedBy?: string;
   remarks?: string;
 }
 
@@ -182,7 +177,6 @@ export interface ActivityItem {
   leader: string;
   description: string;
   targetParticipants: number;
-  attendeesCount?: number;
   status: 'Upcoming' | 'Completed' | 'Ongoing';
   attendanceTracked: boolean;
 }
@@ -194,7 +188,7 @@ export interface AnnouncementItem {
   date: string;
   author: string;
   authorRole: string;
-  featuredImage?: string;
+  featuredImage: string;
   summary: string;
   content: string;
   isPublished: boolean;
@@ -226,23 +220,17 @@ export interface CertificateItem {
   id: string;
   certificateNumber: string; // e.g. "CERT-PAGASA-2026-089"
   memberId: string;
-  memberName?: string;
-  recipientName?: string;
-  eventId?: string;
-  eventOrActivityTitle?: string;
-  eventTitle?: string;
-  certificateType: 'Leadership' | 'Participation' | 'Excellence' | 'Volunteerism' | 'Special Recognition' | 'Completion' | 'Recognition' | 'Appreciation';
+  memberName: string;
+  eventOrActivityTitle: string;
+  certificateType: 'Leadership' | 'Participation' | 'Excellence' | 'Volunteerism' | 'Special Recognition';
   issueDate: string;
-  organization?: string;
+  organization: string;
   signatories: {
     name: string;
-    position?: string;
-    title?: string;
-    signatureUrl?: string;
+    position: string;
   }[];
   description: string;
   qrVerificationUrl: string;
-  qrVerificationCode?: string;
 }
 
 export interface NotificationItem {
@@ -259,8 +247,6 @@ export interface NotificationItem {
 export interface AuditLogItem {
   id: string;
   userName: string;
-  performedBy?: string;
-  performedByRole?: UserRole;
   userRole: UserRole;
   action: string;
   module: 'Events' | 'Attendance' | 'Members' | 'Announcements' | 'Projects' | 'Certificates' | 'Settings' | 'Gallery' | 'Officials' | 'Activities';
