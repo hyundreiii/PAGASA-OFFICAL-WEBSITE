@@ -54,7 +54,6 @@ export const Navbar: React.FC = () => {
 
   const navLinks: { label: string; page: ActivePage; icon: any }[] = [
     { label: 'Home', page: 'home', icon: Sparkles },
-    { label: 'Member Directory', page: 'directory', icon: Users },
     { label: 'About Us', page: 'about', icon: Users },
     { label: 'Officials', page: 'officials', icon: Shield },
     { label: 'Events', page: 'events', icon: Calendar },

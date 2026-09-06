@@ -34,7 +34,11 @@ import {
   Calendar,
   MapPin,
   Phone,
-  User as UserIcon
+  User as UserIcon,
+  EyeOff,
+  ChevronDown,
+  ChevronUp,
+  FileText
 } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import { ChangeProfilePictureModal } from '../common/ChangeProfilePictureModal';
@@ -59,6 +63,15 @@ export const AdminMembers: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedBarangay, setSelectedBarangay] = useState('ALL');
   const [activeTab, setActiveTab] = useState<'ALL' | 'NEW' | 'NEEDS_PASSWORD' | 'ACTIVE'>('ALL');
+  const [showJoinOrgSection, setShowJoinOrgSection] = useState(true);
+  const [revealedPasswords, setRevealedPasswords] = useState<Record<string, boolean>>({});
+
+  const togglePasswordVisibility = (id: string) => {
+    setRevealedPasswords(prev => ({
+      ...prev,
+      [id]: !prev[id]
+    }));
+  };
 
   // Modals State
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -118,6 +131,12 @@ export const AdminMembers: React.FC = () => {
   const activeCount = members.filter(m => m.isAccountActivated === true || m.membershipStatus === 'Active').length;
   const newlyRegisteredCount = members.filter(m => m.membershipStatus === 'Pending' || !m.isAccountActivated).length;
   const needsPasswordCount = members.filter(m => !m.passwordAssigned && !m.portalPassword).length;
+  // Submissions from Join Organization (pending activation, needing password, or newly registered)
+  const joinOrgSubmissions = members.filter(m => 
+    m.membershipStatus === 'Pending' || 
+    !m.isAccountActivated || 
+    !m.portalPassword
+  );
 
   const handleOpenPasswordModal = (m: Member) => {
     setPasswordTargetMember(m);
@@ -267,11 +286,23 @@ export const AdminMembers: React.FC = () => {
   };
 
   const handleCopyCredentials = (m: Member) => {
-    const message = `MABUHAY! You have been registered in the PAGASA Guimba Youth MIS.\n\nName: ${m.fullName}\nMember ID: ${m.memberId}\nGmail: ${m.email}\nAssigned Password: ${m.portalPassword || '[Pending Admin Assignment]'}\nAccount Status: ${m.isAccountActivated ? 'Activated' : 'Pending Activation'}\n\nLogin to your Member Portal at: ${window.location.origin}`;
+    const message = `PAGASA GUIMBA YOUTH MEMBER CREDENTIALS\n` +
+      `-----------------------------------------\n` +
+      `Full Name: ${m.fullName}\n` +
+      `Member ID: ${m.memberId}\n` +
+      `Complete Address: ${m.address}\n` +
+      `Barangay: Brgy. ${m.barangay}, Guimba\n` +
+      `Birthday: ${m.birthdate} (${m.age} years old)\n` +
+      `Cellphone Number: ${m.contactNumber || 'N/A'}\n` +
+      `Gmail Account: ${m.email}\n` +
+      `Assigned Password: ${m.portalPassword || '[Pending Admin Password Assignment]'}\n` +
+      `Account Status: ${m.isAccountActivated ? 'Active & Activated' : 'Pending Activation'}\n` +
+      `-----------------------------------------\n` +
+      `Log in to the PAGASA Youth Portal at: ${window.location.origin}`;
     
     if (navigator.clipboard) {
       navigator.clipboard.writeText(message);
-      addToast(`Copied login credentials for ${m.fullName}!`, 'success');
+      addToast(`Copied registration details and credentials for ${m.fullName}!`, 'success');
     }
   };
 
@@ -321,14 +352,14 @@ export const AdminMembers: React.FC = () => {
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-2xl font-display font-bold text-slate-900">
-              Youth Member Management & Password Control
+              Member Directory & Join Organization Management
             </h1>
             <span className="bg-blue-100 text-blue-800 text-[10px] font-bold px-2.5 py-0.5 rounded-full border border-blue-200">
-              Admin Controlled
+              Admin Portal
             </span>
           </div>
           <p className="text-xs text-slate-500 mt-0.5">
-            Manage registrations, assign/reset portal passwords, and activate member accounts ({filteredMembers.length} records).
+            Admin Member Directory: Review live inputs submitted via Join Organization, assign portal passwords, manage credentials, and activate accounts ({filteredMembers.length} records).
           </p>
         </div>
 
@@ -349,6 +380,279 @@ export const AdminMembers: React.FC = () => {
             <span>Add Member</span>
           </button>
         </div>
+      </div>
+
+      {/* ========================================================= */}
+      {/* JOIN ORGANIZATION - NEW USER CREDENTIALS & INPUTS REVIEW  */}
+      {/* ========================================================= */}
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+        <div className="p-4 bg-gradient-to-r from-blue-900 via-indigo-900 to-slate-900 text-white flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-blue-500/20 border border-blue-400/30 flex items-center justify-center flex-shrink-0">
+              <Sparkles className="w-5 h-5 text-blue-400" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h2 className="text-sm sm:text-base font-bold text-white font-display">
+                  Join Organization — Live Submissions & Credentials Review
+                </h2>
+                <span className="bg-amber-400/20 text-amber-300 border border-amber-400/30 text-[10px] font-bold px-2 py-0.5 rounded-full">
+                  {joinOrgSubmissions.length} Submissions
+                </span>
+              </div>
+              <p className="text-xs text-slate-300 mt-0.5">
+                Review user inputs submitted from the public Join Organization form and assign credentials.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setShowJoinOrgSection(!showJoinOrgSection)}
+              className="px-3 py-1.5 bg-white/10 hover:bg-white/20 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
+            >
+              <span>{showJoinOrgSection ? 'Hide Submissions' : 'Show Submissions'}</span>
+              {showJoinOrgSection ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+            </button>
+          </div>
+        </div>
+
+        {showJoinOrgSection && (
+          <div className="p-4 sm:p-5 bg-slate-50/60 border-t border-slate-200">
+            {joinOrgSubmissions.length === 0 ? (
+              <div className="text-center py-8 bg-white rounded-xl border border-dashed border-slate-200 p-6">
+                <CheckCircle2 className="w-8 h-8 text-emerald-500 mx-auto mb-2" />
+                <p className="text-sm font-bold text-slate-800">All Join Organization Registrations Processed</p>
+                <p className="text-xs text-slate-500 mt-1 max-w-md mx-auto">
+                  Every member currently has an assigned password and an activated account. When new members submit the "Join Organization" form on the public portal, they will instantly appear here for credentials review.
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                  {joinOrgSubmissions.map((m) => {
+                    const isPassRevealed = Boolean(revealedPasswords[m.id]);
+                    const hasPassword = Boolean(m.portalPassword || m.passwordAssigned);
+                    const isActivated = Boolean(m.isAccountActivated || m.membershipStatus === 'Active');
+
+                    return (
+                      <div 
+                        key={`join-org-${m.id}`}
+                        className="bg-white rounded-2xl border border-slate-200 hover:border-blue-300 shadow-xs hover:shadow-md transition-all p-4 sm:p-5 flex flex-col justify-between relative overflow-hidden"
+                      >
+                        {/* Top banner */}
+                        <div className="flex items-start justify-between gap-2 border-b border-slate-100 pb-3 mb-3">
+                          <div className="flex items-center gap-3">
+                            <div 
+                              className="relative cursor-pointer group"
+                              onClick={() => setPhotoTargetMember(m)}
+                              title="Click to update photo"
+                            >
+                              <img 
+                                src={m.profilePicture} 
+                                alt="" 
+                                className="w-12 h-12 rounded-full object-cover border-2 border-blue-500 shadow-xs group-hover:brightness-90 transition-all"
+                              />
+                              <div className="absolute inset-0 rounded-full bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                <Camera className="w-3.5 h-3.5 text-white" />
+                              </div>
+                            </div>
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <h3 className="font-bold text-slate-900 text-sm sm:text-base font-display">
+                                  {m.fullName}
+                                </h3>
+                                <span className="px-2 py-0.5 bg-blue-50 text-blue-700 font-mono font-bold text-[10px] rounded border border-blue-200">
+                                  {m.memberId}
+                                </span>
+                              </div>
+                              <p className="text-xs text-slate-500 flex items-center gap-1.5 mt-0.5">
+                                <Clock className="w-3 h-3 text-slate-400" />
+                                <span>Registered: {m.registrationDate || m.membershipDate || '2026-03-01'}</span>
+                              </p>
+                            </div>
+                          </div>
+
+                          <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold border ${
+                            isActivated 
+                              ? 'bg-emerald-50 text-emerald-700 border-emerald-200' 
+                              : 'bg-amber-50 text-amber-700 border-amber-200'
+                          }`}>
+                            {isActivated ? 'Activated' : 'Pending Activation'}
+                          </span>
+                        </div>
+
+                        {/* Join Organization Submitted Input Fields */}
+                        <div className="bg-slate-50/80 rounded-xl p-3 border border-slate-200 text-xs mb-3 space-y-2">
+                          <div className="flex items-center justify-between border-b border-slate-200/80 pb-1 mb-1.5">
+                            <span className="text-[10px] uppercase font-bold text-slate-600 tracking-wider flex items-center gap-1">
+                              <FileText className="w-3 h-3 text-blue-600" />
+                              Join Organization Form Inputs:
+                            </span>
+                            <span className="text-[10px] text-blue-600 font-semibold bg-blue-50 px-1.5 py-0.5 rounded">
+                              Brgy. {m.barangay}
+                            </span>
+                          </div>
+
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-slate-700">
+                            {/* 1. Full Name */}
+                            <div className="bg-white p-2 rounded-lg border border-slate-200/70">
+                              <span className="text-[10px] font-bold text-slate-400 block uppercase">1. Full Name</span>
+                              <span className="font-semibold text-slate-900">{m.fullName}</span>
+                            </div>
+
+                            {/* 2. Complete Address */}
+                            <div className="bg-white p-2 rounded-lg border border-slate-200/70">
+                              <span className="text-[10px] font-bold text-slate-400 block uppercase">2. Complete Address</span>
+                              <span className="font-semibold text-slate-900 truncate block" title={m.address}>
+                                {m.address}
+                              </span>
+                            </div>
+
+                            {/* 3. Birthday */}
+                            <div className="bg-white p-2 rounded-lg border border-slate-200/70">
+                              <span className="text-[10px] font-bold text-slate-400 block uppercase">3. Birthday</span>
+                              <span className="font-semibold text-slate-900">{m.birthdate}</span>
+                            </div>
+
+                            {/* 4. Age */}
+                            <div className="bg-white p-2 rounded-lg border border-slate-200/70">
+                              <span className="text-[10px] font-bold text-slate-400 block uppercase">4. Age</span>
+                              <span className="font-semibold text-slate-900">{m.age} years old</span>
+                            </div>
+
+                            {/* 5. Gmail Account */}
+                            <div className="bg-white p-2 rounded-lg border border-slate-200/70">
+                              <span className="text-[10px] font-bold text-slate-400 block uppercase">5. Gmail Account</span>
+                              <span className="font-mono font-bold text-blue-700 truncate block" title={m.email}>
+                                {m.email}
+                              </span>
+                            </div>
+
+                            {/* 6. Cellphone Number */}
+                            <div className="bg-white p-2 rounded-lg border border-slate-200/70">
+                              <span className="text-[10px] font-bold text-slate-400 block uppercase">6. Cellphone Number</span>
+                              <span className="font-mono font-semibold text-slate-800">
+                                {m.contactNumber || 'Not provided'}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Credentials & Password Section */}
+                        <div className="bg-blue-50/50 rounded-xl p-3 border border-blue-200/70 text-xs mb-3 space-y-2">
+                          <div className="flex items-center justify-between">
+                            <span className="text-[10px] uppercase font-bold text-blue-900 tracking-wider flex items-center gap-1">
+                              <Key className="w-3 h-3 text-blue-600" />
+                              User Credentials & Access
+                            </span>
+                            {hasPassword ? (
+                              <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full">
+                                Password Assigned
+                              </span>
+                            ) : (
+                              <span className="text-[10px] font-bold text-rose-700 bg-rose-100 px-2 py-0.5 rounded-full animate-pulse">
+                                Needs Password
+                              </span>
+                            )}
+                          </div>
+
+                          <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs text-slate-500 font-medium">Assigned Password:</span>
+                              {hasPassword ? (
+                                <div className="flex items-center gap-1 bg-white px-2.5 py-1 rounded-lg border border-slate-300">
+                                  <span className="font-mono font-bold text-xs text-slate-900">
+                                    {isPassRevealed ? m.portalPassword : '••••••••'}
+                                  </span>
+                                  <button
+                                    type="button"
+                                    onClick={() => togglePasswordVisibility(m.id)}
+                                    className="text-slate-400 hover:text-slate-700 p-0.5 cursor-pointer ml-1"
+                                    title={isPassRevealed ? 'Hide Password' : 'Show Password'}
+                                  >
+                                    {isPassRevealed ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                                  </button>
+                                </div>
+                              ) : (
+                                <span className="text-xs text-rose-600 italic font-medium">
+                                  Not set yet (Admin must assign)
+                                </span>
+                              )}
+                            </div>
+
+                            <button
+                              type="button"
+                              onClick={() => handleOpenPasswordModal(m)}
+                              className="px-2.5 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold transition-colors cursor-pointer flex items-center gap-1 shadow-xs"
+                            >
+                              <Lock className="w-3 h-3" />
+                              <span>{hasPassword ? 'Change Password' : 'Assign Password'}</span>
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Card Footer Actions */}
+                        <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-100">
+                          <div className="flex items-center gap-2">
+                            {isActivated ? (
+                              <button
+                                type="button"
+                                onClick={() => handleToggleActivation(m)}
+                                className="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 rounded-lg text-xs font-bold transition-colors cursor-pointer border border-rose-200"
+                              >
+                                Deactivate
+                              </button>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={() => handleToggleActivation(m)}
+                                className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition-colors shadow-xs cursor-pointer flex items-center gap-1"
+                              >
+                                <CheckCircle2 className="w-3.5 h-3.5" />
+                                <span>Activate Account</span>
+                              </button>
+                            )}
+
+                            <button
+                              type="button"
+                              onClick={() => handleCopyCredentials(m)}
+                              className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-bold transition-colors cursor-pointer flex items-center gap-1"
+                              title="Copy user credentials to clipboard"
+                            >
+                              <Copy className="w-3.5 h-3.5" />
+                              <span>Copy Details</span>
+                            </button>
+                          </div>
+
+                          <div className="flex items-center gap-1.5">
+                            <button
+                              type="button"
+                              onClick={() => setViewingMember(m)}
+                              className="px-2.5 py-1.5 text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-lg text-xs font-bold transition-colors cursor-pointer flex items-center gap-1"
+                            >
+                              <QrCode className="w-3.5 h-3.5" />
+                              <span>Pass / QR</span>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleOpenEdit(m)}
+                              className="p-1.5 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
+                              title="Edit Member Details"
+                            >
+                              <Edit3 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Quick Metrics Bar & Tabs */}
@@ -542,15 +846,27 @@ export const AdminMembers: React.FC = () => {
                       {/* Password Status */}
                       <td className="py-3 px-4 whitespace-nowrap">
                         {hasPassword ? (
-                          <button
-                            type="button"
-                            onClick={() => handleOpenPasswordModal(m)}
-                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 transition-colors cursor-pointer"
-                            title="Click to view, change, or reset password"
-                          >
-                            <Lock className="w-3 h-3 text-emerald-600" />
-                            <span>Password Set</span>
-                          </button>
+                          <div className="flex items-center gap-1.5">
+                            <span className="font-mono text-xs text-slate-800 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">
+                              {revealedPasswords[m.id] ? m.portalPassword : '••••••'}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => togglePasswordVisibility(m.id)}
+                              className="text-slate-400 hover:text-slate-700 p-0.5 cursor-pointer"
+                              title={revealedPasswords[m.id] ? 'Hide password' : 'Show password'}
+                            >
+                              {revealedPasswords[m.id] ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleOpenPasswordModal(m)}
+                              className="text-blue-600 hover:text-blue-800 p-0.5 cursor-pointer"
+                              title="Change password"
+                            >
+                              <Edit3 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
                         ) : (
                           <button
                             type="button"
@@ -866,10 +1182,10 @@ export const AdminMembers: React.FC = () => {
         </div>
       )}
 
-      {/* Member QR / Detail Modal */}
+      {/* Member Details & Join Organization Inputs Modal */}
       {viewingMember && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-          <div className="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl border border-slate-100 space-y-4 text-center relative">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm overflow-y-auto">
+          <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-100 space-y-4 my-6 relative">
             <button
               onClick={() => setViewingMember(null)}
               className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 p-1 cursor-pointer"
@@ -877,39 +1193,142 @@ export const AdminMembers: React.FC = () => {
               <X className="w-5 h-5" />
             </button>
 
-            <img
-              src={viewingMember.profilePicture}
-              alt=""
-              className="w-20 h-20 rounded-full object-cover mx-auto border-2 border-blue-600 shadow-md"
-            />
-            <div>
-              <span className="font-mono text-xs font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded">
-                {viewingMember.memberId}
-              </span>
-              <h3 className="text-lg font-bold text-slate-900 font-display mt-1">{viewingMember.fullName}</h3>
-              <p className="text-xs text-slate-500">Brgy. {viewingMember.barangay}, Guimba</p>
-              <div className="mt-2 inline-flex items-center gap-1.5 text-xs text-blue-700 bg-blue-50 px-2.5 py-1 rounded-full border border-blue-200">
-                <Mail className="w-3.5 h-3.5 text-red-500" />
-                <span className="font-mono">{viewingMember.email}</span>
+            {/* Header */}
+            <div className="flex items-center gap-3.5 border-b border-slate-100 pb-4">
+              <img
+                src={viewingMember.profilePicture}
+                alt=""
+                className="w-14 h-14 rounded-full object-cover border-2 border-blue-600 shadow-md flex-shrink-0"
+              />
+              <div>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-lg font-bold text-slate-900 font-display">{viewingMember.fullName}</h3>
+                  <span className="font-mono text-xs font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded border border-blue-200">
+                    {viewingMember.memberId}
+                  </span>
+                </div>
+                <p className="text-xs text-slate-500">
+                  Brgy. {viewingMember.barangay}, Guimba, Nueva Ecija
+                </p>
+                <div className="mt-1 flex items-center gap-2">
+                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                    viewingMember.isAccountActivated || viewingMember.membershipStatus === 'Active'
+                      ? 'bg-emerald-100 text-emerald-800'
+                      : 'bg-amber-100 text-amber-800'
+                  }`}>
+                    {viewingMember.isAccountActivated || viewingMember.membershipStatus === 'Active' ? 'Activated' : 'Pending Activation'}
+                  </span>
+                  <span className="text-[10px] text-slate-400">
+                    Registered: {viewingMember.registrationDate || viewingMember.membershipDate || '2026-03-01'}
+                  </span>
+                </div>
               </div>
             </div>
 
-            <div className="p-3 bg-slate-50 border border-slate-200 rounded-2xl inline-block">
-              <QRCodeSVG value={viewingMember.qrCode || viewingMember.memberId} size={150} />
+            {/* Submitted Inputs from Join Organization */}
+            <div className="bg-slate-50 rounded-2xl p-4 border border-slate-200 space-y-2.5">
+              <div className="flex items-center justify-between border-b border-slate-200 pb-1.5">
+                <span className="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
+                  <FileText className="w-3.5 h-3.5 text-blue-600" />
+                  Join Organization Form Submission:
+                </span>
+                <span className="text-[10px] text-blue-700 font-bold bg-blue-100/60 px-2 py-0.5 rounded">
+                  Official Record
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                <div className="bg-white p-2.5 rounded-xl border border-slate-200/80">
+                  <span className="text-[10px] uppercase font-bold text-slate-400 block">1. Full Name</span>
+                  <span className="font-bold text-slate-900">{viewingMember.fullName}</span>
+                </div>
+
+                <div className="bg-white p-2.5 rounded-xl border border-slate-200/80">
+                  <span className="text-[10px] uppercase font-bold text-slate-400 block">2. Complete Address</span>
+                  <span className="font-semibold text-slate-900 block truncate" title={viewingMember.address}>
+                    {viewingMember.address}
+                  </span>
+                </div>
+
+                <div className="bg-white p-2.5 rounded-xl border border-slate-200/80">
+                  <span className="text-[10px] uppercase font-bold text-slate-400 block">3. Birthday</span>
+                  <span className="font-semibold text-slate-900">{viewingMember.birthdate}</span>
+                </div>
+
+                <div className="bg-white p-2.5 rounded-xl border border-slate-200/80">
+                  <span className="text-[10px] uppercase font-bold text-slate-400 block">4. Age</span>
+                  <span className="font-semibold text-slate-900">{viewingMember.age} years old</span>
+                </div>
+
+                <div className="bg-white p-2.5 rounded-xl border border-slate-200/80">
+                  <span className="text-[10px] uppercase font-bold text-slate-400 block">5. Gmail Account</span>
+                  <span className="font-mono font-bold text-blue-700 block truncate" title={viewingMember.email}>
+                    {viewingMember.email}
+                  </span>
+                </div>
+
+                <div className="bg-white p-2.5 rounded-xl border border-slate-200/80">
+                  <span className="text-[10px] uppercase font-bold text-slate-400 block">6. Cellphone Number</span>
+                  <span className="font-mono font-semibold text-slate-900">
+                    {viewingMember.contactNumber || 'Not provided'}
+                  </span>
+                </div>
+              </div>
+
+              {/* Password & Credentials Summary */}
+              <div className="bg-blue-50/70 p-3 rounded-xl border border-blue-200 flex items-center justify-between">
+                <div>
+                  <span className="text-[10px] uppercase font-bold text-blue-900 block">Admin-Assigned Password</span>
+                  <span className="font-mono font-bold text-xs text-slate-900">
+                    {viewingMember.portalPassword ? (
+                      revealedPasswords[viewingMember.id] ? viewingMember.portalPassword : '••••••••'
+                    ) : (
+                      <span className="text-rose-600 font-sans italic font-normal">Not assigned yet</span>
+                    )}
+                  </span>
+                </div>
+
+                {viewingMember.portalPassword && (
+                  <button
+                    type="button"
+                    onClick={() => togglePasswordVisibility(viewingMember.id)}
+                    className="p-1 text-blue-700 hover:text-blue-900 cursor-pointer"
+                    title={revealedPasswords[viewingMember.id] ? 'Hide password' : 'Show password'}
+                  >
+                    {revealedPasswords[viewingMember.id] ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                )}
+              </div>
             </div>
 
-            <div className="space-y-2 pt-2">
-              <button
-                onClick={() => {
-                  handleOpenPasswordModal(viewingMember);
-                  setViewingMember(null);
-                }}
-                className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
-              >
-                <Key className="w-4 h-4" />
-                <span>Manage Password & Activation</span>
-              </button>
-              
+            {/* QR Pass */}
+            <div className="flex justify-center p-3 bg-slate-50 border border-slate-200 rounded-2xl">
+              <QRCodeSVG value={viewingMember.qrCode || viewingMember.memberId} size={130} />
+            </div>
+
+            <div className="space-y-2 pt-1">
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => {
+                    handleOpenPasswordModal(viewingMember);
+                    setViewingMember(null);
+                  }}
+                  className="flex-1 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer shadow-xs"
+                >
+                  <Key className="w-4 h-4" />
+                  <span>Manage Password & Activation</span>
+                </button>
+                
+                <button
+                  onClick={() => handleCopyCredentials(viewingMember)}
+                  className="px-3 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold flex items-center gap-1 transition-colors cursor-pointer"
+                  title="Copy full credentials to clipboard"
+                >
+                  <Copy className="w-4 h-4" />
+                  <span>Copy</span>
+                </button>
+              </div>
+
               <button
                 onClick={() => setViewingMember(null)}
                 className="w-full py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl text-xs font-bold cursor-pointer"
