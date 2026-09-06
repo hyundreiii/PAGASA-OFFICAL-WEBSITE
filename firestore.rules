@@ -143,98 +143,112 @@ service cloud.firestore {
 
     // Organization Settings
     match /settings/{settingId} {
-      allow read: if isValidId(settingId);
+      allow get: if isValidId(settingId);
+      allow list: if true;
       allow create, update: if isValidId(settingId) && isValidSettings(incoming());
       allow delete: if isValidId(settingId) && isAdmin();
     }
 
     // Members
     match /members/{memberId} {
-      allow read: if isValidId(memberId);
+      allow get: if isValidId(memberId);
+      allow list: if true;
       allow create, update: if isValidId(memberId) && isValidMember(incoming());
       allow delete: if isValidId(memberId);
     }
 
     // Events
     match /events/{eventId} {
-      allow read: if isValidId(eventId);
+      allow get: if isValidId(eventId);
+      allow list: if true;
       allow create, update: if isValidId(eventId) && isValidEvent(incoming());
       allow delete: if isValidId(eventId);
     }
 
     // Event Registrations
     match /registrations/{registrationId} {
-      allow read: if isValidId(registrationId);
+      allow get: if isValidId(registrationId);
+      allow list: if true;
       allow create, update: if isValidId(registrationId) && isValidRegistration(incoming());
       allow delete: if isValidId(registrationId);
     }
 
     // Attendance Sessions
     match /attendanceSessions/{sessionId} {
-      allow read: if isValidId(sessionId);
+      allow get: if isValidId(sessionId);
+      allow list: if true;
       allow create, update: if isValidId(sessionId) && isValidAttendanceSession(incoming());
       allow delete: if isValidId(sessionId);
     }
 
     // Attendance Records
     match /attendanceRecords/{recordId} {
-      allow read: if isValidId(recordId);
+      allow get: if isValidId(recordId);
+      allow list: if true;
       allow create, update: if isValidId(recordId) && isValidAttendanceRecord(incoming());
       allow delete: if isValidId(recordId);
     }
 
     // Projects
     match /projects/{projectId} {
-      allow read: if isValidId(projectId);
+      allow get: if isValidId(projectId);
+      allow list: if true;
       allow create, update: if isValidId(projectId) && isValidProject(incoming());
       allow delete: if isValidId(projectId);
     }
 
     // Activities
     match /activities/{activityId} {
-      allow read: if isValidId(activityId);
+      allow get: if isValidId(activityId);
+      allow list: if true;
       allow create, update: if isValidId(activityId) && isValidActivity(incoming());
       allow delete: if isValidId(activityId);
     }
 
     // Announcements
     match /announcements/{announcementId} {
-      allow read: if isValidId(announcementId);
+      allow get: if isValidId(announcementId);
+      allow list: if true;
       allow create, update: if isValidId(announcementId) && isValidAnnouncement(incoming());
       allow delete: if isValidId(announcementId);
     }
 
     // Officials
     match /officials/{officialId} {
-      allow read: if isValidId(officialId);
+      allow get: if isValidId(officialId);
+      allow list: if true;
       allow create, update: if isValidId(officialId) && isValidOfficial(incoming());
       allow delete: if isValidId(officialId);
     }
 
     // Certificates
     match /certificates/{certificateId} {
-      allow read: if isValidId(certificateId);
+      allow get: if isValidId(certificateId);
+      allow list: if true;
       allow create, update: if isValidId(certificateId) && isValidCertificate(incoming());
       allow delete: if isValidId(certificateId);
     }
 
     // Gallery
     match /gallery/{photoId} {
-      allow read: if isValidId(photoId);
+      allow get: if isValidId(photoId);
+      allow list: if true;
       allow create, update: if isValidId(photoId) && isValidGallery(incoming());
       allow delete: if isValidId(photoId);
     }
 
     // Notifications
     match /notifications/{notificationId} {
-      allow read: if isValidId(notificationId);
+      allow get: if isValidId(notificationId);
+      allow list: if true;
       allow create, update: if isValidId(notificationId) && isValidNotification(incoming());
       allow delete: if isValidId(notificationId);
     }
 
     // Audit Logs (Append-Only)
     match /auditLogs/{logId} {
-      allow read: if isValidId(logId);
+      allow get: if isValidId(logId);
+      allow list: if true;
       allow create: if isValidId(logId) && isValidAuditLog(incoming());
       allow update, delete: if false; // Append-only audit integrity
     }

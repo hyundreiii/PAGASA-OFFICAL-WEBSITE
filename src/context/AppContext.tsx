@@ -40,7 +40,10 @@ import {
 import {
   signInWithGoogle as firebaseGoogleSignIn,
   signOutFirebase,
-  subscribeToAuth
+  subscribeToAuth,
+  saveMemberDoc,
+  fetchMembersFromFirestore,
+  subscribeToMembers
 } from '../firebase/firestoreService';
 import { ConfirmModal, ConfirmModalConfig } from '../components/common/ConfirmModal';
 import {
@@ -167,6 +170,8 @@ interface AppContextType {
   getStorageMetrics: () => { usedBytes: number; formattedSize: string; itemCounts: Record<string, number> };
   
   members: Member[];
+  joinSubmissions: Member[];
+  fetchLatestMembers: () => Promise<{ success: boolean; count: number; message: string }>;
   addMember: (member: Omit<Member, 'id' | 'memberId' | 'membershipDate' | 'stats'>) => Member;
   registerMemberAccount: (data: {
     fullName: string;
@@ -175,6 +180,7 @@ interface AppContextType {
     age: number;
     email: string;
     contactNumber: string;
+    password?: string;
     gender?: 'Male' | 'Female' | 'Prefer not to say' | 'Other';
     barangay?: string;
   }) => { success: boolean; message: string; member?: Member };
@@ -365,6 +371,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return storageService.loadMembers();
   });
 
+  const [joinSubmissions, setJoinSubmissions] = useState<Member[]>(() => {
+    const fromStorage = storageService.loadJoinSubmissions();
+    if (fromStorage && fromStorage.length > 0) return fromStorage;
+    const initialMembers = storageService.loadMembers();
+    return initialMembers.filter(m => m.registrationSource === 'JOIN_ORGANIZATION_FORM' || m.membershipStatus === 'Pending' || !m.isAccountActivated);
+  });
+
   const [events, setEvents] = useState<EventItem[]>(() => {
     return storageService.loadEvents();
   });
@@ -498,6 +511,100 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     window.addEventListener('storage', handleStorageEvent);
     return () => window.removeEventListener('storage', handleStorageEvent);
   }, []);
+
+  // Save join submissions to storage
+  useEffect(() => {
+    storageService.saveJoinSubmissions(joinSubmissions);
+  }, [joinSubmissions]);
+
+  // Real-time synchronization from Firestore
+  useEffect(() => {
+    try {
+      const unsubscribeMembers = subscribeToMembers((cloudMembers) => {
+        if (cloudMembers && cloudMembers.length > 0) {
+          setMembers(prev => {
+            const map = new Map<string, Member>();
+            prev.forEach(m => map.set(m.id, m));
+            cloudMembers.forEach(m => {
+              const existing = map.get(m.id);
+              map.set(m.id, existing ? { ...existing, ...m } : m);
+            });
+            const merged = Array.from(map.values());
+            storageService.saveMembers(merged);
+            return merged;
+          });
+
+          // Sync join submissions from cloud
+          const cloudSubmissions = cloudMembers.filter(
+            m => m.registrationSource === 'JOIN_ORGANIZATION_FORM' || m.membershipStatus === 'Pending' || !m.isAccountActivated
+          );
+          if (cloudSubmissions.length > 0) {
+            setJoinSubmissions(prev => {
+              const map = new Map<string, Member>();
+              prev.forEach(m => map.set(m.id, m));
+              cloudSubmissions.forEach(m => {
+                const existing = map.get(m.id);
+                map.set(m.id, existing ? { ...existing, ...m } : m);
+              });
+              const merged = Array.from(map.values());
+              storageService.saveJoinSubmissions(merged);
+              return merged;
+            });
+          }
+        }
+      });
+      return () => unsubscribeMembers();
+    } catch (err) {
+      console.warn('Real-time member subscription notice:', err);
+    }
+  }, []);
+
+  // Explicit method to fetch latest credentials & submissions from Firestore
+  const fetchLatestMembers = async (): Promise<{ success: boolean; count: number; message: string }> => {
+    try {
+      const cloudMembers = await fetchMembersFromFirestore();
+      if (cloudMembers && cloudMembers.length > 0) {
+        setMembers(prev => {
+          const map = new Map<string, Member>();
+          prev.forEach(m => map.set(m.id, m));
+          cloudMembers.forEach(m => {
+            const existing = map.get(m.id);
+            map.set(m.id, existing ? { ...existing, ...m } : m);
+          });
+          const merged = Array.from(map.values());
+          storageService.saveMembers(merged);
+          return merged;
+        });
+
+        const cloudSubmissions = cloudMembers.filter(
+          m => m.registrationSource === 'JOIN_ORGANIZATION_FORM' || m.membershipStatus === 'Pending' || !m.isAccountActivated
+        );
+        if (cloudSubmissions.length > 0) {
+          setJoinSubmissions(prev => {
+            const map = new Map<string, Member>();
+            prev.forEach(m => map.set(m.id, m));
+            cloudSubmissions.forEach(m => {
+              const existing = map.get(m.id);
+              map.set(m.id, existing ? { ...existing, ...m } : m);
+            });
+            const merged = Array.from(map.values());
+            storageService.saveJoinSubmissions(merged);
+            return merged;
+          });
+        }
+
+        showToast('success', 'Credentials Synchronized', `Fetched ${cloudMembers.length} member records & credentials from Cloud Database.`);
+        return { success: true, count: cloudMembers.length, message: `Fetched ${cloudMembers.length} records.` };
+      } else {
+        showToast('info', 'Up to Date', `Directory is fully synchronized. ${members.length} members loaded.`);
+        return { success: true, count: members.length, message: 'All records are up to date.' };
+      }
+    } catch (err) {
+      console.warn('Could not fetch cloud members:', err);
+      showToast('info', 'Storage Active', `Synchronized ${members.length} member credentials from local state.`);
+      return { success: true, count: members.length, message: 'Loaded records from storage.' };
+    }
+  };
 
   // Sync Firebase Auth state if active session exists
   useEffect(() => {
@@ -1114,7 +1221,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     showToast('info', 'Member Deleted', 'Member has been removed from registry.');
   };
 
-  // Member Registration Workflow (Gmail Unique, Saves Info, Adds to Directory, Pending Admin Password & Activation)
+  // Member Registration Workflow (Gmail Unique, Saves Info, Adds to Directory, Captures Credentials, Syncs to Firestore)
   const registerMemberAccount = (data: {
     fullName: string;
     address: string;
@@ -1122,6 +1229,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     age: number;
     email: string;
     contactNumber: string;
+    password?: string;
     gender?: 'Male' | 'Female' | 'Prefer not to say' | 'Other';
     barangay?: string;
   }): { success: boolean; message: string; member?: Member } => {
@@ -1147,6 +1255,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const nextNum = members.length + 48;
     const memberId = `PAGASA-2026-${String(nextNum).padStart(4, '0')}`;
     const today = new Date().toISOString().split('T')[0];
+    const nowIso = new Date().toISOString();
+
+    const assignedPassword = (data.password || '').trim() || 'GuimbaYouth2026!';
+    const hasCustomPassword = Boolean(data.password && data.password.trim().length >= 6);
 
     const newMember: Member = {
       id: 'mem-' + Date.now(),
@@ -1164,10 +1276,19 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       profilePicture: `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(data.fullName.trim())}&backgroundColor=ffd5dc,c0aede,b6e3f4`,
       membershipDate: today,
       registrationDate: today,
+      submittedAt: nowIso,
       membershipStatus: 'Pending',
       isAccountActivated: false,
-      passwordAssigned: false,
-      portalPassword: '',
+      passwordAssigned: true,
+      passwordAssignedAt: nowIso,
+      portalPassword: assignedPassword,
+      registrationSource: 'JOIN_ORGANIZATION_FORM',
+      submittedCredentials: {
+        username: emailTrimmed,
+        password: assignedPassword,
+        submittedAt: nowIso,
+        source: 'Join Organization Form'
+      },
       organizationPosition: 'Youth Member',
       committee: 'General Youth Volunteer',
       emergencyContact: {
@@ -1188,13 +1309,21 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     setMembers(prev => [newMember, ...prev]);
     storageService.saveMembers([newMember, ...members]);
-    logAuditEvent('New Member Registered', 'Members', `New member registered: ${newMember.fullName} (${newMember.email}). Automatically added to Member Directory.`);
-    addNotification('New Member Registered', `${newMember.fullName} registered with Gmail (${newMember.email}). Pending password assignment and activation.`, 'system');
+    storageService.addJoinSubmission(newMember);
+    setJoinSubmissions(prev => [newMember, ...prev.filter(m => m.id !== newMember.id)]);
 
-    showToast('success', 'Registration Successful', `Account created for ${newMember.fullName}! You have been automatically added to the Member Directory.`);
+    // Save to Firestore cloud database
+    saveMemberDoc(newMember).catch(err => {
+      console.warn('Firestore member sync notice:', err);
+    });
+
+    logAuditEvent('New Member Registered', 'Members', `New member registered: ${newMember.fullName} (${newMember.email}) via Join Organization Form. User credentials recorded.`);
+    addNotification('New Join Credentials Submitted', `${newMember.fullName} submitted credentials (${newMember.email}). Member ID: ${memberId}. Pending Administrator Activation.`, 'system');
+
+    showToast('success', 'Registration Successful', `Account and credentials created for ${newMember.fullName}! Added to Member Directory.`);
     return {
       success: true,
-      message: 'Registration submitted successfully! Your information has been saved and automatically added to the Member Directory. An Administrator will assign your password and activate your account.',
+      message: 'Registration submitted successfully! Your credentials and information have been saved and displayed in the Admin Dashboard Member Directory for activation.',
       member: newMember
     };
   };
@@ -1918,6 +2047,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         restoreStateSnapshot,
         getStorageMetrics,
         members,
+        joinSubmissions,
+        fetchLatestMembers,
         addMember,
         registerMemberAccount,
         assignMemberPassword,

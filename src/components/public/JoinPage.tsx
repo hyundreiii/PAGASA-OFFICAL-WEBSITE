@@ -17,12 +17,17 @@ import {
   ArrowRight,
   AlertCircle,
   Clock,
-  Check
+  Check,
+  Eye,
+  EyeOff,
+  Copy,
+  Key,
+  ShieldAlert
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
 export const JoinPage: React.FC = () => {
-  const { registerMemberAccount, setCurrentPage } = useApp();
+  const { registerMemberAccount, setCurrentPage, addToast } = useApp();
 
   // Required Fields
   const [fullName, setFullName] = useState('');
@@ -32,6 +37,9 @@ export const JoinPage: React.FC = () => {
   const [age, setAge] = useState(21);
   const [gmail, setGmail] = useState('');
   const [cellphoneNumber, setCellphoneNumber] = useState('');
+  const [password, setPassword] = useState('GuimbaYouth2026!');
+  const [showPassword, setShowPassword] = useState(false);
+  const [copiedField, setCopiedField] = useState<string | null>(null);
 
   // UI States
   const [formError, setFormError] = useState('');
@@ -41,6 +49,12 @@ export const JoinPage: React.FC = () => {
     memberId: string;
     fullName: string;
     email: string;
+    password: string;
+    address: string;
+    contactNumber: string;
+    barangay: string;
+    age: number;
+    birthdate: string;
   } | null>(null);
 
   // Auto-calculate age whenever birthdate changes
@@ -58,6 +72,36 @@ export const JoinPage: React.FC = () => {
       }
     }
   }, [birthdate]);
+
+  const handleCopy = (text: string, fieldName: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedField(fieldName);
+    if (addToast) {
+      addToast(`Copied ${fieldName} to clipboard`, 'success');
+    }
+    setTimeout(() => setCopiedField(null), 2500);
+  };
+
+  const handleCopyAllCredentials = () => {
+    if (!submittedMember) return;
+    const credText = 
+      `==========================================\n` +
+      `PAGASA GUIMBA YOUTH - NEW USER CREDENTIALS\n` +
+      `Submitted via Join Organization Form\n` +
+      `==========================================\n` +
+      `Full Name: ${submittedMember.fullName}\n` +
+      `Member ID: ${submittedMember.memberId}\n` +
+      `Login Gmail (Username): ${submittedMember.email}\n` +
+      `Portal Password: ${submittedMember.password}\n` +
+      `Cellphone Number: ${submittedMember.contactNumber}\n` +
+      `Address: ${submittedMember.address}\n` +
+      `Barangay: Brgy. ${submittedMember.barangay}, Guimba\n` +
+      `Birthday: ${submittedMember.birthdate} (${submittedMember.age} yrs old)\n` +
+      `Account Status: Pending Admin Activation\n` +
+      `Admin Directory: View in Admin Dashboard -> Member Directory\n` +
+      `==========================================`;
+    handleCopy(credText, 'Full Credentials');
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -92,6 +136,12 @@ export const JoinPage: React.FC = () => {
       return;
     }
 
+    const finalPassword = password.trim() || 'GuimbaYouth2026!';
+    if (finalPassword.length < 6) {
+      setFormError('Password must be at least 6 characters.');
+      return;
+    }
+
     setIsSubmitting(true);
 
     const fullAddressString = address.toLowerCase().includes(barangay.toLowerCase())
@@ -105,7 +155,8 @@ export const JoinPage: React.FC = () => {
       birthdate,
       age,
       email: trimmedGmail,
-      contactNumber: cellphoneNumber.trim()
+      contactNumber: cellphoneNumber.trim(),
+      password: finalPassword
     });
 
     setIsSubmitting(false);
@@ -115,7 +166,13 @@ export const JoinPage: React.FC = () => {
         id: result.member.id,
         memberId: result.member.memberId,
         fullName: result.member.fullName,
-        email: result.member.email
+        email: result.member.email,
+        password: result.member.portalPassword || finalPassword,
+        address: result.member.address,
+        contactNumber: result.member.contactNumber,
+        barangay: result.member.barangay,
+        age: result.member.age,
+        birthdate: result.member.birthdate
       });
       try {
         confetti({ particleCount: 90, spread: 70, origin: { y: 0.6 } });
@@ -131,6 +188,7 @@ export const JoinPage: React.FC = () => {
     setAddress('');
     setGmail('');
     setCellphoneNumber('');
+    setPassword('GuimbaYouth2026!');
     setFormError('');
   };
 
@@ -241,38 +299,141 @@ export const JoinPage: React.FC = () => {
         <div className="lg:col-span-7">
           <div className="bg-white rounded-3xl p-8 sm:p-10 border border-slate-200 shadow-sm">
             {submittedMember ? (
-              /* Success Card */
-              <div className="text-center space-y-5 py-4">
-                <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto">
-                  <CheckCircle2 className="w-10 h-10" />
-                </div>
-                <div className="space-y-1">
+              /* Success Card with Full Credentials Display */
+              <div className="space-y-6 py-2">
+                <div className="text-center space-y-2">
+                  <div className="w-14 h-14 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto shadow-xs">
+                    <CheckCircle2 className="w-8 h-8" />
+                  </div>
                   <h3 className="text-2xl font-bold text-slate-900 font-display">
                     Registration Submitted Successfully!
                   </h3>
-                  <p className="text-xs sm:text-sm text-slate-600 max-w-md mx-auto leading-relaxed">
-                    Mabuhay, <span className="font-bold text-slate-900">{submittedMember.fullName}</span>! Your registration has been saved and your account created with Member ID:
+                  <p className="text-xs sm:text-sm text-slate-600 max-w-lg mx-auto leading-relaxed">
+                    Mabuhay, <span className="font-bold text-slate-900">{submittedMember.fullName}</span>! Your registration and credentials have been recorded and sent to the <strong className="text-blue-700">Admin Dashboard Member Directory</strong>.
                   </p>
                 </div>
 
-                <div className="p-4 bg-blue-50 border border-blue-200 rounded-2xl inline-block font-mono font-bold text-blue-800 text-xl">
-                  {submittedMember.memberId}
-                </div>
-
-                <div className="bg-amber-50/80 border border-amber-200 rounded-2xl p-4 text-xs text-amber-900 text-left max-w-lg mx-auto space-y-2">
-                  <div className="flex items-center gap-1.5 font-bold text-amber-900">
-                    <Clock className="w-4 h-4 text-amber-600" />
-                    <span>Account Status: Pending Admin Password & Activation</span>
+                {/* Prominent User Credentials Card */}
+                <div className="bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900 text-white rounded-2xl p-5 sm:p-6 shadow-lg border border-blue-900/50 space-y-4">
+                  <div className="flex items-center justify-between border-b border-white/10 pb-3">
+                    <div className="flex items-center gap-2">
+                      <Key className="w-4 h-4 text-blue-400" />
+                      <span className="text-xs font-bold uppercase tracking-wider text-blue-300">
+                        Official New User Credentials
+                      </span>
+                    </div>
+                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-400/20 text-amber-300 border border-amber-400/30">
+                      Pending Admin Activation
+                    </span>
                   </div>
-                  <p className="leading-relaxed">
-                    You have been automatically added to the official <strong className="text-slate-900">Member Directory</strong>. The Administrator will now assign your password and activate your account through the Admin Dashboard.
-                  </p>
-                  <p className="text-[11px] text-amber-800">
-                    Registered Gmail: <span className="font-mono font-bold">{submittedMember.email}</span>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                    {/* Member ID */}
+                    <div className="bg-white/5 border border-white/10 p-3 rounded-xl">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] uppercase font-bold text-slate-400">Member ID</span>
+                        <button
+                          type="button"
+                          onClick={() => handleCopy(submittedMember.memberId, 'Member ID')}
+                          className="text-blue-300 hover:text-white transition-colors cursor-pointer flex items-center gap-1 text-[10px]"
+                        >
+                          {copiedField === 'Member ID' ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+                          <span>{copiedField === 'Member ID' ? 'Copied' : 'Copy'}</span>
+                        </button>
+                      </div>
+                      <p className="font-mono font-bold text-blue-300 text-sm mt-0.5">{submittedMember.memberId}</p>
+                    </div>
+
+                    {/* Full Name */}
+                    <div className="bg-white/5 border border-white/10 p-3 rounded-xl">
+                      <span className="text-[10px] uppercase font-bold text-slate-400 block">Full Name</span>
+                      <p className="font-bold text-white text-sm mt-0.5">{submittedMember.fullName}</p>
+                    </div>
+
+                    {/* Gmail Account (Username) */}
+                    <div className="bg-white/5 border border-white/10 p-3 rounded-xl sm:col-span-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] uppercase font-bold text-slate-400 flex items-center gap-1">
+                          <Mail className="w-3 h-3 text-red-400" />
+                          <span>Login Gmail (Username)</span>
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => handleCopy(submittedMember.email, 'Gmail Account')}
+                          className="text-blue-300 hover:text-white transition-colors cursor-pointer flex items-center gap-1 text-[10px]"
+                        >
+                          {copiedField === 'Gmail Account' ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+                          <span>{copiedField === 'Gmail Account' ? 'Copied' : 'Copy'}</span>
+                        </button>
+                      </div>
+                      <p className="font-mono font-bold text-white text-sm mt-0.5 truncate">{submittedMember.email}</p>
+                    </div>
+
+                    {/* Portal Password */}
+                    <div className="bg-white/5 border border-white/10 p-3 rounded-xl sm:col-span-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] uppercase font-bold text-slate-400 flex items-center gap-1">
+                          <Lock className="w-3 h-3 text-amber-400" />
+                          <span>Account Password</span>
+                        </span>
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => setShowPassword(!showPassword)}
+                            className="text-slate-300 hover:text-white transition-colors cursor-pointer flex items-center gap-1 text-[10px]"
+                          >
+                            {showPassword ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
+                            <span>{showPassword ? 'Hide' : 'Show'}</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleCopy(submittedMember.password, 'Password')}
+                            className="text-blue-300 hover:text-white transition-colors cursor-pointer flex items-center gap-1 text-[10px]"
+                          >
+                            {copiedField === 'Password' ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+                            <span>{copiedField === 'Password' ? 'Copied' : 'Copy'}</span>
+                          </button>
+                        </div>
+                      </div>
+                      <p className="font-mono font-bold text-amber-300 text-sm mt-0.5">
+                        {showPassword ? submittedMember.password : '••••••••••••'}
+                      </p>
+                    </div>
+
+                    {/* Contact & Location */}
+                    <div className="bg-white/5 border border-white/10 p-2.5 rounded-xl">
+                      <span className="text-[10px] uppercase font-bold text-slate-400 block">Cellphone Number</span>
+                      <p className="font-mono text-slate-200 mt-0.5">{submittedMember.contactNumber}</p>
+                    </div>
+
+                    <div className="bg-white/5 border border-white/10 p-2.5 rounded-xl">
+                      <span className="text-[10px] uppercase font-bold text-slate-400 block">Barangay</span>
+                      <p className="text-slate-200 mt-0.5">Brgy. {submittedMember.barangay}, Guimba</p>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={handleCopyAllCredentials}
+                    className="w-full py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-colors cursor-pointer shadow-xs"
+                  >
+                    <Copy className="w-3.5 h-3.5" />
+                    <span>Copy Full Credentials to Clipboard</span>
+                  </button>
+                </div>
+
+                {/* Admin Notice */}
+                <div className="bg-blue-50 border border-blue-200 rounded-2xl p-4 text-xs text-blue-950 text-left space-y-2">
+                  <div className="flex items-center gap-1.5 font-bold text-blue-900">
+                    <Sparkles className="w-4 h-4 text-blue-600" />
+                    <span>Live Synchronization with Admin Dashboard</span>
+                  </div>
+                  <p className="text-slate-700 leading-relaxed">
+                    Your credentials have been securely stored in the database. The Administrator can view your inputs in the <strong>Admin Dashboard Member Directory</strong> to activate your account and grant full portal access.
                   </p>
                 </div>
 
-                <div className="pt-3 flex flex-wrap justify-center gap-3">
+                <div className="pt-2 flex flex-wrap justify-center gap-3">
                   <button
                     type="button"
                     onClick={() => setCurrentPage('directory')}
@@ -308,7 +469,7 @@ export const JoinPage: React.FC = () => {
                     Member Registration Form
                   </h2>
                   <p className="text-xs text-slate-500 mt-0.5">
-                    Please provide accurate information. All fields marked with * are required.
+                    Please provide accurate information. All credentials will be saved and reviewed in the Admin Member Directory.
                   </p>
                 </div>
 
@@ -408,7 +569,7 @@ export const JoinPage: React.FC = () => {
                   <div className="flex items-center justify-between mb-1">
                     <label className="block text-xs font-bold text-slate-700 flex items-center gap-1.5">
                       <Mail className="w-3.5 h-3.5 text-red-500" />
-                      <span>Gmail Account *</span>
+                      <span>Gmail Account (Portal Username) *</span>
                     </label>
                     <span className="text-[10px] text-blue-700 bg-blue-50 px-2 py-0.5 rounded-full font-bold border border-blue-200">
                       Must end in @gmail.com & unique
@@ -423,7 +584,7 @@ export const JoinPage: React.FC = () => {
                     className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600 font-mono"
                   />
                   <p className="text-[11px] text-slate-400 mt-1">
-                    This Gmail account will be your permanent username for logging in to the Member Portal.
+                    This Gmail will serve as your permanent username to log in to the Member Portal.
                   </p>
                 </div>
 
@@ -443,15 +604,43 @@ export const JoinPage: React.FC = () => {
                   />
                 </div>
 
-                {/* Notice on Password Assignment */}
-                <div className="p-3.5 bg-blue-50/70 border border-blue-200 rounded-2xl flex items-start gap-2.5 text-blue-900 text-xs">
-                  <Lock className="w-4 h-4 text-blue-600 flex-shrink-0 mt-0.5" />
-                  <div className="space-y-0.5">
-                    <p className="font-bold text-blue-950">Admin-Controlled Password System</p>
-                    <p className="text-[11px] text-blue-800 leading-relaxed">
-                      You do not need to enter a password here. After clicking Submit, your account is saved and an Administrator will assign your password and activate your account through the Admin Dashboard.
-                    </p>
+                {/* 7. Portal Password */}
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                      <Lock className="w-3.5 h-3.5 text-blue-600" />
+                      <span>Account Password (Credentials) *</span>
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => setPassword('GuimbaYouth2026!')}
+                      className="text-[10px] text-blue-600 hover:text-blue-800 font-semibold cursor-pointer underline"
+                    >
+                      Use default (GuimbaYouth2026!)
+                    </button>
                   </div>
+                  <div className="relative">
+                    <input
+                      type={showPassword ? 'text' : 'password'}
+                      required
+                      minLength={6}
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="Enter a secure password (min 6 characters)"
+                      className="w-full pl-3.5 pr-10 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600 font-mono"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5 cursor-pointer"
+                      title={showPassword ? 'Hide password' : 'Show password'}
+                    >
+                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                  <p className="text-[11px] text-slate-400 mt-1">
+                    Your password will be saved with your submission and can also be viewed or reset by an Administrator in the Member Directory.
+                  </p>
                 </div>
 
                 {/* Submit Registration Button */}
@@ -461,10 +650,10 @@ export const JoinPage: React.FC = () => {
                   className="w-full py-3.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-xs sm:text-sm transition-colors shadow-md shadow-blue-500/20 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 mt-2"
                 >
                   {isSubmitting ? (
-                    <span>Submitting Registration...</span>
+                    <span>Submitting Registration & Credentials...</span>
                   ) : (
                     <>
-                      <span>Submit Registration</span>
+                      <span>Submit Registration & Save Credentials</span>
                       <ArrowRight className="w-4 h-4" />
                     </>
                   )}

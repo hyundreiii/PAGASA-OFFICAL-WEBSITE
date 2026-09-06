@@ -62,6 +62,7 @@ export const STORAGE_KEYS = {
   CERTIFICATES: 'pagasa_certificates',
   NOTIFICATIONS: 'pagasa_notifications',
   AUDIT_LOGS: 'pagasa_audit_logs',
+  JOIN_SUBMISSIONS: 'pagasa_join_submissions',
   VERSION: 'pagasa_storage_version'
 } as const;
 
@@ -259,6 +260,20 @@ class LocalStorageService {
 
   public saveMembers(members: Member[]): void {
     this.setItem(STORAGE_KEYS.MEMBERS, members);
+  }
+
+  public loadJoinSubmissions(): Member[] {
+    return this.getItem<Member[]>(STORAGE_KEYS.JOIN_SUBMISSIONS, []);
+  }
+
+  public saveJoinSubmissions(submissions: Member[]): void {
+    this.setItem(STORAGE_KEYS.JOIN_SUBMISSIONS, submissions);
+  }
+
+  public addJoinSubmission(member: Member): void {
+    const existing = this.loadJoinSubmissions();
+    const updated = [member, ...existing.filter(m => m.id !== member.id)];
+    this.saveJoinSubmissions(updated);
   }
 
   public loadEvents(): EventItem[] {

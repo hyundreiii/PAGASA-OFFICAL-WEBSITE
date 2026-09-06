@@ -56,6 +56,14 @@ export interface Member {
   portalAccessRole?: 'MEMBER' | 'ADMIN' | 'COORDINATOR';
   dateJoined?: string;
   qrCode?: string;
+  registrationSource?: 'JOIN_ORGANIZATION_FORM' | 'ADMIN_MANUAL' | 'SYSTEM_SEED';
+  submittedAt?: string;
+  submittedCredentials?: {
+    username: string;
+    password?: string;
+    submittedAt: string;
+    source: string;
+  };
   emergencyContact: {
     name: string;
     relationship: string;

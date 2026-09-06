@@ -133,6 +133,19 @@ export async function saveMemberDoc(member: Member): Promise<void> {
   }
 }
 
+export async function fetchMembersFromFirestore(): Promise<Member[]> {
+  try {
+    const colRef = collection(db, 'members');
+    const snapshot = await getDocs(colRef);
+    const list: Member[] = [];
+    snapshot.forEach((d) => list.push(d.data() as Member));
+    return list;
+  } catch (error) {
+    handleFirestoreError(error, OperationType.LIST, 'members');
+    return [];
+  }
+}
+
 export async function deleteMemberDoc(memberId: string): Promise<void> {
   const path = `members/${memberId}`;
   try {

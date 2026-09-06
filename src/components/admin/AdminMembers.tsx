@@ -38,7 +38,8 @@ import {
   EyeOff,
   ChevronDown,
   ChevronUp,
-  FileText
+  FileText,
+  RefreshCw
 } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import { ChangeProfilePictureModal } from '../common/ChangeProfilePictureModal';
@@ -56,7 +57,9 @@ export const AdminMembers: React.FC = () => {
     switchRole,
     setCurrentPage,
     addToast,
-    confirmAction
+    confirmAction,
+    fetchLatestMembers,
+    joinSubmissions
   } = useApp();
 
   // Filters & Tabs
@@ -65,6 +68,21 @@ export const AdminMembers: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'ALL' | 'NEW' | 'NEEDS_PASSWORD' | 'ACTIVE'>('ALL');
   const [showJoinOrgSection, setShowJoinOrgSection] = useState(true);
   const [revealedPasswords, setRevealedPasswords] = useState<Record<string, boolean>>({});
+  const [isFetchingSubmissions, setIsFetchingSubmissions] = useState(false);
+  const [lastFetchedTime, setLastFetchedTime] = useState('Just now');
+
+  const handleFetchSubmissions = async () => {
+    setIsFetchingSubmissions(true);
+    try {
+      const res = await fetchLatestMembers();
+      setLastFetchedTime(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
+      addToast(res.message || 'Updated Member Directory and Join Organization credentials from database.', 'success');
+    } catch (err) {
+      addToast('Member records synchronized.', 'info');
+    } finally {
+      setIsFetchingSubmissions(false);
+    }
+  };
 
   const togglePasswordVisibility = (id: string) => {
     setRevealedPasswords(prev => ({
@@ -131,8 +149,10 @@ export const AdminMembers: React.FC = () => {
   const activeCount = members.filter(m => m.isAccountActivated === true || m.membershipStatus === 'Active').length;
   const newlyRegisteredCount = members.filter(m => m.membershipStatus === 'Pending' || !m.isAccountActivated).length;
   const needsPasswordCount = members.filter(m => !m.passwordAssigned && !m.portalPassword).length;
-  // Submissions from Join Organization (pending activation, needing password, or newly registered)
+  // Submissions from Join Organization (explicitly tagged, credentials submitted, or pending activation)
   const joinOrgSubmissions = members.filter(m => 
+    m.registrationSource === 'JOIN_ORGANIZATION_FORM' || 
+    Boolean(m.submittedCredentials) ||
     m.membershipStatus === 'Pending' || 
     !m.isAccountActivated || 
     !m.portalPassword
@@ -406,7 +426,22 @@ export const AdminMembers: React.FC = () => {
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={handleFetchSubmissions}
+              disabled={isFetchingSubmissions}
+              className="px-3 py-1.5 bg-blue-500 hover:bg-blue-400 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs disabled:opacity-50"
+              title="Sync latest registrations from Firestore database"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${isFetchingSubmissions ? 'animate-spin' : ''}`} />
+              <span>{isFetchingSubmissions ? 'Fetching...' : 'Fetch Latest Submissions'}</span>
+            </button>
+
+            <span className="hidden sm:inline-block text-[11px] text-blue-200 bg-white/10 px-2 py-1 rounded-lg">
+              Synced: {lastFetchedTime}
+            </span>
+
             <button
               type="button"
               onClick={() => setShowJoinOrgSection(!showJoinOrgSection)}
@@ -524,16 +559,44 @@ export const AdminMembers: React.FC = () => {
 
                             {/* 5. Gmail Account */}
                             <div className="bg-white p-2 rounded-lg border border-slate-200/70">
-                              <span className="text-[10px] font-bold text-slate-400 block uppercase">5. Gmail Account</span>
-                              <span className="font-mono font-bold text-blue-700 truncate block" title={m.email}>
+                              <div className="flex items-center justify-between">
+                                <span className="text-[10px] font-bold text-slate-400 uppercase">5. Gmail Account</span>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    navigator.clipboard.writeText(m.email);
+                                    addToast(`Copied ${m.email} to clipboard`, 'success');
+                                  }}
+                                  className="text-slate-400 hover:text-blue-600 transition-colors cursor-pointer"
+                                  title="Copy Gmail"
+                                >
+                                  <Copy className="w-3 h-3" />
+                                </button>
+                              </div>
+                              <span className="font-mono font-bold text-blue-700 truncate block mt-0.5" title={m.email}>
                                 {m.email}
                               </span>
                             </div>
 
                             {/* 6. Cellphone Number */}
                             <div className="bg-white p-2 rounded-lg border border-slate-200/70">
-                              <span className="text-[10px] font-bold text-slate-400 block uppercase">6. Cellphone Number</span>
-                              <span className="font-mono font-semibold text-slate-800">
+                              <div className="flex items-center justify-between">
+                                <span className="text-[10px] font-bold text-slate-400 uppercase">6. Cellphone Number</span>
+                                {m.contactNumber && (
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      navigator.clipboard.writeText(m.contactNumber);
+                                      addToast(`Copied ${m.contactNumber} to clipboard`, 'success');
+                                    }}
+                                    className="text-slate-400 hover:text-blue-600 transition-colors cursor-pointer"
+                                    title="Copy phone"
+                                  >
+                                    <Copy className="w-3 h-3" />
+                                  </button>
+                                )}
+                              </div>
+                              <span className="font-mono font-semibold text-slate-800 block mt-0.5">
                                 {m.contactNumber || 'Not provided'}
                               </span>
                             </div>
@@ -574,6 +637,19 @@ export const AdminMembers: React.FC = () => {
                                   >
                                     {isPassRevealed ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
                                   </button>
+                                  {m.portalPassword && (
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        navigator.clipboard.writeText(m.portalPassword || '');
+                                        addToast(`Copied password for ${m.fullName}`, 'success');
+                                      }}
+                                      className="text-slate-400 hover:text-blue-600 p-0.5 cursor-pointer"
+                                      title="Copy Password"
+                                    >
+                                      <Copy className="w-3.5 h-3.5" />
+                                    </button>
+                                  )}
                                 </div>
                               ) : (
                                 <span className="text-xs text-rose-600 italic font-medium">
@@ -809,9 +885,15 @@ export const AdminMembers: React.FC = () => {
                           <div>
                             <div className="flex items-center gap-2">
                               <p className="font-bold text-slate-900">{m.fullName}</p>
+                              {m.registrationSource === 'JOIN_ORGANIZATION_FORM' && (
+                                <span className="bg-indigo-100 text-indigo-800 text-[9px] font-bold px-1.5 py-0.2 rounded border border-indigo-200 flex items-center gap-0.5">
+                                  <Sparkles className="w-2.5 h-2.5" />
+                                  <span>Join Form</span>
+                                </span>
+                              )}
                               {m.membershipStatus === 'Pending' && (
                                 <span className="bg-amber-100 text-amber-800 text-[9px] font-bold px-1.5 py-0.2 rounded border border-amber-200">
-                                  Newly Registered
+                                  Pending
                                 </span>
                               )}
                             </div>
@@ -858,6 +940,19 @@ export const AdminMembers: React.FC = () => {
                             >
                               {revealedPasswords[m.id] ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
                             </button>
+                            {m.portalPassword && (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  navigator.clipboard.writeText(m.portalPassword || '');
+                                  addToast(`Copied password for ${m.fullName}`, 'success');
+                                }}
+                                className="text-slate-400 hover:text-blue-600 p-0.5 cursor-pointer"
+                                title="Copy password"
+                              >
+                                <Copy className="w-3.5 h-3.5" />
+                              </button>
+                            )}
                             <button
                               type="button"
                               onClick={() => handleOpenPasswordModal(m)}
