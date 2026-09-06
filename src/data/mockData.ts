@@ -99,11 +99,11 @@ export const INITIAL_SETTINGS: OrganizationSettings = {
 export const INITIAL_USERS: User[] = [
   {
     id: 'usr-admin-1',
-    name: 'Gian Carlo Magat',
+    name: 'PAGASA_ADMIN',
     email: 'admin@pagasaguimba.org',
     role: 'SUPER_ADMIN',
-    avatar: 'https://api.dicebear.com/7.x/adventurer/svg?seed=Alex&backgroundColor=b6e3f4,c0aede,d1d4f9',
-    memberId: 'PAGASA-2025-001'
+    avatar: 'https://api.dicebear.com/7.x/adventurer/svg?seed=PAGASA_ADMIN&backgroundColor=b6e3f4,c0aede,d1d4f9',
+    memberId: 'PAGASA-ADMIN-01'
   },
   {
     id: 'usr-member-1',

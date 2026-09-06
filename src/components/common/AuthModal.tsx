@@ -345,6 +345,24 @@ export const AuthModal: React.FC = () => {
                     <span>{authError}</span>
                   </div>
                 )}
+
+                {authModalMode === 'admin-login' && (
+                  <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-1 text-xs">
+                    <p className="font-bold text-slate-800 flex items-center gap-1.5">
+                      <Shield className="w-3.5 h-3.5 text-blue-600" />
+                      <span>Admin Credentials</span>
+                    </p>
+                    <div className="flex flex-wrap gap-1.5 text-[11px] font-mono">
+                      <span className="bg-white px-2 py-0.5 rounded border border-slate-200 font-semibold text-slate-900">
+                        USERNAME: PAGASA_ADMIN
+                      </span>
+                      <span className="bg-white px-2 py-0.5 rounded border border-slate-200 font-semibold text-slate-900">
+                        PASSWORD: TayoAngPagasa
+                      </span>
+                    </div>
+                  </div>
+                )}
+
                 {/* 1-Click Google Sign In */}
                 <button
                   type="button"
@@ -366,13 +384,15 @@ export const AuthModal: React.FC = () => {
                     <div className="w-full border-t border-slate-200"></div>
                   </div>
                   <div className="relative flex justify-center text-[11px] uppercase">
-                    <span className="bg-white px-3 text-slate-400 font-semibold tracking-wider">Or continue with Email / Member ID</span>
+                    <span className="bg-white px-3 text-slate-400 font-semibold tracking-wider">
+                      {authModalMode === 'admin-login' ? 'Or enter Admin Username' : 'Or continue with Email / Member ID'}
+                    </span>
                   </div>
                 </div>
 
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-                    {authModalMode === 'admin-login' ? 'Email Address' : 'Email Address or Member ID'}
+                    {authModalMode === 'admin-login' ? 'Admin Username' : 'Email Address or Member ID'}
                   </label>
                   <div className="relative">
                     <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
@@ -381,7 +401,7 @@ export const AuthModal: React.FC = () => {
                       required
                       value={loginEmail}
                       onChange={(e) => setLoginEmail(e.target.value)}
-                      placeholder={authModalMode === 'admin-login' ? 'name@example.com' : 'Email address or Member ID'}
+                      placeholder={authModalMode === 'admin-login' ? 'PAGASA_ADMIN' : 'Email address or Member ID'}
                       className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600 transition-all placeholder:text-slate-400"
                     />
                   </div>
@@ -397,7 +417,7 @@ export const AuthModal: React.FC = () => {
                       type="password"
                       value={loginPassword}
                       onChange={(e) => setLoginPassword(e.target.value)}
-                      placeholder="Enter your password"
+                      placeholder={authModalMode === 'admin-login' ? 'TayoAngPagasa' : 'Enter your password'}
                       className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600 transition-all placeholder:text-slate-400"
                     />
                   </div>

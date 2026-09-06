@@ -1333,32 +1333,39 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   // Admin Login with credentials
-  const loginAdminWithPassword = (email: string, password: string): { success: boolean; message: string } => {
-    const trimmedEmail = (email || '').trim().toLowerCase();
+  const loginAdminWithPassword = (usernameOrEmail: string, password: string): { success: boolean; message: string } => {
+    const rawInput = (usernameOrEmail || '').trim();
+    const normalizedInput = rawInput.toLowerCase();
     const trimmedPassword = (password || '').trim();
 
     const isAuthorizedAdmin = 
-      trimmedEmail === 'admin@pagasaguimba.org' ||
-      trimmedEmail === 'giancarlomagat19@gmail.com' ||
-      trimmedEmail === 'giancarlomagat2104@gmail.com' ||
-      trimmedEmail.includes('admin');
+      rawInput === 'PAGASA_ADMIN' ||
+      normalizedInput === 'pagasa_admin' ||
+      normalizedInput === 'admin@pagasaguimba.org' ||
+      normalizedInput === 'giancarlomagat19@gmail.com' ||
+      normalizedInput === 'giancarlomagat2104@gmail.com' ||
+      normalizedInput.includes('admin');
 
     const isValidPassword = 
+      trimmedPassword === 'TayoAngPagasa' ||
       trimmedPassword === 'pagasa2026' || 
-      trimmedPassword === 'admin123' || 
-      trimmedPassword.length >= 6;
+      trimmedPassword === 'admin123';
 
     if (!isAuthorizedAdmin || !isValidPassword) {
       return {
         success: false,
-        message: 'Invalid Administrator credentials or password.'
+        message: 'Invalid Administrator Username or Password. Please enter Username: PAGASA_ADMIN and Password: TayoAngPagasa.'
       };
     }
 
-    const adminUser = INITIAL_USERS[0];
+    const adminUser: User = {
+      ...INITIAL_USERS[0],
+      name: 'PAGASA_ADMIN',
+      role: 'SUPER_ADMIN'
+    };
     switchRole('SUPER_ADMIN', adminUser);
-    logAuditEvent('Admin Login', 'Settings', `Administrator logged in: ${trimmedEmail}.`);
-    showToast('success', 'Admin Access Granted', 'Logged in to Admin Dashboard.');
+    logAuditEvent('Admin Login', 'Settings', `Administrator logged in with identifier: ${rawInput}.`);
+    showToast('success', 'Admin Access Granted', 'Welcome back, PAGASA_ADMIN!');
     return {
       success: true,
       message: 'Admin access granted.'

@@ -32,8 +32,8 @@ export const MemberLoginPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
 
   // Admin Form State
-  const [adminEmail, setAdminEmail] = useState('admin@pagasaguimba.org');
-  const [adminPassword, setAdminPassword] = useState('pagasa2026');
+  const [adminUsername, setAdminUsername] = useState('PAGASA_ADMIN');
+  const [adminPassword, setAdminPassword] = useState('TayoAngPagasa');
   const [adminError, setAdminError] = useState('');
 
   const handleMemberLogin = (e: React.FormEvent) => {
@@ -57,7 +57,7 @@ export const MemberLoginPage: React.FC = () => {
     setIsLoading(true);
 
     setTimeout(() => {
-      const result = loginAdminWithPassword(adminEmail, adminPassword);
+      const result = loginAdminWithPassword(adminUsername, adminPassword);
       setIsLoading(false);
       if (!result.success) {
         setAdminError(result.message);
@@ -266,14 +266,31 @@ export const MemberLoginPage: React.FC = () => {
               </div>
             )}
 
+            {/* Info Box with Credentials */}
+            <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-2xl space-y-1.5">
+              <div className="flex items-center gap-1.5 text-xs font-bold text-slate-800">
+                <ShieldCheck className="w-4 h-4 text-emerald-600" />
+                <span>Admin Login Credentials</span>
+              </div>
+              <div className="flex flex-wrap items-center gap-2 text-[11px] text-slate-600 font-mono">
+                <span className="bg-white px-2 py-0.5 rounded border border-slate-200 font-bold text-slate-900">
+                  USERNAME: PAGASA_ADMIN
+                </span>
+                <span className="bg-white px-2 py-0.5 rounded border border-slate-200 font-bold text-slate-900">
+                  PASSWORD: TayoAngPagasa
+                </span>
+              </div>
+            </div>
+
             <form onSubmit={handleAdminLogin} className="space-y-4">
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1.5">Admin Email</label>
+                <label className="block text-xs font-bold text-slate-700 mb-1.5">Admin Username</label>
                 <input
-                  type="email"
+                  type="text"
                   required
-                  value={adminEmail}
-                  onChange={(e) => setAdminEmail(e.target.value)}
+                  value={adminUsername}
+                  onChange={(e) => { setAdminUsername(e.target.value); setAdminError(''); }}
+                  placeholder="PAGASA_ADMIN"
                   className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600 font-mono"
                 />
               </div>
@@ -284,7 +301,8 @@ export const MemberLoginPage: React.FC = () => {
                   type="password"
                   required
                   value={adminPassword}
-                  onChange={(e) => setAdminPassword(e.target.value)}
+                  onChange={(e) => { setAdminPassword(e.target.value); setAdminError(''); }}
+                  placeholder="TayoAngPagasa"
                   className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600 font-mono"
                 />
               </div>
